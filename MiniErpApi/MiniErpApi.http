@@ -1,6 +1,83 @@
 @MiniErpApi_HostAddress = http://localhost:5185
 
-GET {{MiniErpApi_HostAddress}}/weatherforecast/
+### Clientes
+
+GET {{MiniErpApi_HostAddress}}/clientes
 Accept: application/json
 
 ###
+POST {{MiniErpApi_HostAddress}}/clientes
+Content-Type: application/json
+
+{
+  "nome": "Maria Silva",
+  "idade": 30,
+  "ativo": true
+}
+
+###
+PUT {{MiniErpApi_HostAddress}}/clientes/1
+Content-Type: application/json
+
+{
+  "nome": "Maria Silva",
+  "idade": 31,
+  "ativo": true
+}
+
+###
+DELETE {{MiniErpApi_HostAddress}}/clientes/1
+
+### Motoristas
+
+GET {{MiniErpApi_HostAddress}}/motoristas
+Accept: application/json
+
+###
+POST {{MiniErpApi_HostAddress}}/motoristas
+Content-Type: application/json
+
+{
+  "nome": "Joao Souza",
+  "cnh": "12345678900",
+  "telefone": "19999999999"
+}
+
+###
+PUT {{MiniErpApi_HostAddress}}/motoristas/1
+Content-Type: application/json
+
+{
+  "nome": "Joao Souza",
+  "cnh": "12345678900",
+  "telefone": "19988887777"
+}
+
+###
+DELETE {{MiniErpApi_HostAddress}}/motoristas/1
+
+### Entregas
+
+GET {{MiniErpApi_HostAddress}}/entregas
+Accept: application/json
+
+###
+POST {{MiniErpApi_HostAddress}}/entregas
+Content-Type: application/json
+
+{
+  "endereco": "Rua das Flores, 123",
+  "clienteId": 1
+}
+
+### Despachar entrega (muda status para "Em transito" e vincula motorista)
+PUT {{MiniErpApi_HostAddress}}/entregas/1
+Content-Type: application/json
+
+{
+  "status": "Em transito",
+  "motoristaId": 1
+}
+
+###
+DELETE {{MiniErpApi_HostAddress}}/entregas/1

@@ -180,7 +180,7 @@ void ExcluirCliente(AppDbContext db)
     bool temEntregas = db.Entregas.Any(e => e.ClienteId == clienteEscolhido.Id);
     if (temEntregas)
     {
-        Console.WriteLine("Este cliente possui entregas cadastradas e não pode ser excluido.");
+        Console.WriteLine("Este cliente possui entregas cadastradas e nao pode ser excluido.");
         return;
     }
 
@@ -261,7 +261,7 @@ void ExcluirMotorista(AppDbContext db)
     bool temEntregas = db.Entregas.Any(e => e.MotoristaId == motoristaEscolhido.Id);
     if (temEntregas)
     {
-        Console.WriteLine("Este motorista possui entregas vinculadas e não pode ser excluido.");
+        Console.WriteLine("Este motorista possui entregas vinculadas e nao pode ser excluido.");
         return;
     }
 
