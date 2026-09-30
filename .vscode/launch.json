@@ -1,0 +1,30 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "MiniErpApi",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-api",
+            "program": "${workspaceFolder}/MiniErpApi/bin/Debug/net8.0/MiniErpApi.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/MiniErpApi",
+            "stopAtEntry": false,
+            "console": "internalConsole",
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        },
+        {
+            "name": "MiniErpLogistica",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-logistica",
+            "program": "${workspaceFolder}/MiniErpLogistica/bin/Debug/net8.0/MiniErpLogistica.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/MiniErpLogistica",
+            "stopAtEntry": false,
+            "console": "integratedTerminal"
+        }
+    ]
+}

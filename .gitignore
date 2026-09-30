@@ -1,0 +1,16 @@
+# Artefatos de build do .NET
+bin/
+obj/
+
+# Banco de dados SQLite local (gerado por migrations, nao versionar)
+*.db
+*.db-shm
+*.db-wal
+
+# Configuracoes locais de usuario do Visual Studio / Rider
+.vs/
+*.user
+
+# Arquivos de ambiente / segredos
+appsettings.Development.json
+*.env
