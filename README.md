@@ -14,12 +14,21 @@ As entidades e como se relacionam:
 - **Motorista** — quem despacha. Um motorista pode estar em várias entregas.
 - **Entrega** — pertence a um cliente (obrigatório) e a um motorista (opcional, definido no despacho).
 
-## Duas versões
+## Duas versões + interface web
 
 O repositório tem dois projetos que compartilham as mesmas entidades:
 
 - **`MiniErpLogistica`** — versão console, com menu interativo no terminal. Foi onde a lógica e as validações nasceram.
 - **`MiniErpApi`** — versão API REST (ASP.NET Core Minimal API), que expõe as operações como endpoints HTTP e pode ser consumida por outras aplicações.
+
+A API também entrega o **Rota ERP**, a interface web do sistema (`MiniErpApi/wwwroot/index.html`). É uma página única em HTML, CSS e JavaScript puro, sem framework, com:
+
+- Painel com indicadores, fluxo semanal, status das entregas e fila de despacho
+- Entregas em lista + detalhe, com despacho (escolha do motorista) e confirmação de entrega
+- Cadastro, edição e exclusão de clientes e motoristas
+- Tema claro/escuro e layout responsivo (desktop, tablet e celular)
+
+O front conversa com a API via `fetch`. As regras continuam no back: se a API recusa algo (por exemplo, excluir um cliente que tem entregas), a mensagem dela aparece na tela. Se a página for aberta sem a API rodando, ela entra em **modo demonstração**, com dados de exemplo e as mesmas regras, para dar para navegar mesmo assim.
 
 ## Tecnologias
 
@@ -28,6 +37,7 @@ O repositório tem dois projetos que compartilham as mesmas entidades:
 - **Entity Framework Core 8** — ORM (mapeamento objeto-relacional)
 - **SQLite** — banco de dados
 - **Swagger** — documentação e teste dos endpoints
+- **HTML, CSS e JavaScript** — interface web (Rota ERP), servida pela própria API
 
 O banco foi mantido em SQLite pela simplicidade, mas como o acesso passa pelo EF Core, migrar para PostgreSQL ou SQL Server exige mudar essencialmente a linha de configuração do provedor.
 
@@ -55,10 +65,11 @@ dotnet ef database update   # cria o banco a partir das migrations
 dotnet run
 ```
 
-Com a aplicação no ar, a documentação interativa fica em:
+Com a aplicação no ar:
 
 ```
-http://localhost:5185/swagger
+http://localhost:5185           # interface web (Rota ERP)
+http://localhost:5185/swagger   # documentação interativa da API
 ```
 
 > A porta pode variar; confira o endereço em `Now listening on:` no terminal.
@@ -104,7 +115,9 @@ mini ERP logistico/
     ├── Motorista.cs
     ├── Entrega.cs
     ├── AppDbContext.cs
-    └── Program.cs
+    ├── Program.cs
+    └── wwwroot/
+        └── index.html  # interface web (Rota ERP)
 ```
 
 ## Roadmap
@@ -113,7 +126,7 @@ Este é o estado da **V1**. As próximas versões estão planejadas para evoluir
 
 - **V2 — Veículo:** cadastro de frota, ligando motorista, veículo e entrega.
 - **V3 — Histórico de status:** registrar cada mudança de status de uma entrega ao longo do tempo, não apenas o status atual.
-- **Futuro:** camada visual (front-end) consumindo a API, autenticação, e validação de entregas duplicadas.
+- **Futuro:** autenticação, validação de entregas duplicadas e datas nas entregas (para os gráficos do painel usarem histórico real).
 
 ## Autor
 

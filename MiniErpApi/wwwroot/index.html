@@ -1,0 +1,2162 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rota ERP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap">
+<style>
+/* =====================================================================
+   ROTA ERP — front-end do Mini ERP de Logística (v3)
+   Layout: sidebar flutuante e colapsável (ref. 21st.dev) + área de
+   trabalho em grade "bento" de cards arredondados (ref. Behance/Finnova).
+   Destaque ousado em um só lugar: o painel escuro + card índigo de detalhe.
+   Tipografia: Urbanist (spec do case Behance: 32 / 18 / 14 com 160%).
+
+   v3 — componentes do 21st.dev portados para CSS/JS puro:
+     • Glowing Effect (Aceternity): borda que acende seguindo o cursor
+     • Border Beam (Magic UI): feixe de luz na fila quando há despacho pendente
+     • Abas com indicador deslizante (padrão "animated tabs")
+   Navegação por largura: sidebar inteira > 1100px, trilho de ícones
+   entre 641 e 1100px, barra inferior de abas até 640px.
+   ===================================================================== */
+:root {
+  /* superfícies e texto */
+  --bg: #f3f4f9;
+  --glow: rgba(91, 76, 240, .07);
+  --surface: #ffffff;
+  --surface-2: #f6f7fb;
+  --surface-3: #eceef6;
+  --fg: #161a33;
+  --fg-2: #4a4f6e;
+  --muted: #6f7493;
+  --border: #e6e8f1;
+  /* marca: índigo */
+  --primary: #5b4cf0;
+  --primary-strong: #4a3be0;
+  --primary-soft: #eeebff;
+  --on-primary: #ffffff;
+  --shadow-primary: 0 8px 22px rgba(91, 76, 240, .30);
+  /* painel escuro (master) e card de detalhe */
+  --ink: #1a1c3a;
+  --ink-2: #24274b;
+  --ink-3: #2e3260;
+  --ink-fg: #eceefb;
+  --ink-muted: #a3a6cc;
+  --detail-a: #4b3ce6;
+  --detail-b: #7a6cff;
+  /* status (spec Behance + índigo da marca) */
+  --amber: #eca118; --amber-soft: #fff3d9; --amber-ink: #8a5a00;
+  --indigo: #5b4cf0; --indigo-soft: #eeebff; --indigo-ink: #4433d6;
+  --green: #1fb77a; --green-soft: #dff5eb; --green-ink: #0f7650;
+  --danger: #f0475c; --danger-soft: #fde8eb; --danger-ink: #c32a40;
+  /* avatares */
+  --av0-bg: #eeebff; --av0-fg: #4433d6;
+  --av1-bg: #fff3d4; --av1-fg: #8a5a00;
+  --av2-bg: #e2f8e9; --av2-fg: #13793a;
+  --av3-bg: #fde8eb; --av3-fg: #c32a40;
+  --av4-bg: #e3f2fb; --av4-fg: #1a6a96;
+  /* efeitos */
+  --shadow-sm: 0 1px 2px rgba(22, 26, 51, .04), 0 6px 18px rgba(22, 26, 51, .04);
+  --shadow-md: 0 14px 34px rgba(22, 26, 51, .10);
+  --shadow-lg: 0 24px 60px rgba(22, 26, 51, .22);
+  --spot: rgba(91, 76, 240, .10);
+  --spot-ink: rgba(255, 255, 255, .07);
+  /* borda do painel escuro: no tema escuro ela é o que separa o painel do fundo */
+  --ink-border: transparent;
+  /* Glowing Effect: cores do arco de luz (índigo -> violeta -> verde da marca) */
+  --glow-a: #5b4cf0; --glow-b: #a78bfa; --glow-c: #1fb77a;
+  /* Border Beam */
+  --beam-a: #a99fff; --beam-b: #f6c24d;
+  /* aba ativa (indicador deslizante) */
+  --seg-on: #1a1c3a; --seg-on-fg: #eceefb;
+  --scrim: rgba(16, 18, 40, .45);
+  /* tipografia */
+  --font: "Urbanist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* raios por hierarquia: tela > card > peça interna > pílula */
+  --r-xl: 26px; --r-lg: 20px; --r-md: 14px; --r-sm: 10px; --pill: 999px;
+  --side-w: 256px; --side-w-min: 80px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0e1f; --glow: rgba(122, 108, 255, .13);
+    --surface: #151833; --surface-2: #1b1f3d; --surface-3: #232748;
+    --fg: #eceefb; --fg-2: #bdc0de; --muted: #8e92b8; --border: #272b4f;
+    --primary: #7a6cff; --primary-strong: #8c80ff; --primary-soft: #26245a; --on-primary: #ffffff;
+    --shadow-primary: 0 8px 22px rgba(122, 108, 255, .35);
+    --ink: #12142e; --ink-2: #1c1f44; --ink-3: #262a58; --ink-fg: #eceefb; --ink-muted: #9a9dc6;
+    --amber-soft: #3a2d0b; --amber-ink: #f6c24d;
+    --indigo-soft: #26245a; --indigo-ink: #a99fff;
+    --green: #2fcf8d; --green-soft: #0e2e22; --green-ink: #5fe0a8;
+    --ink-border: #2a2e57; --glow-a: #8c80ff; --glow-b: #c4b5fd; --glow-c: #2fcf8d;
+    --seg-on: #3a3e8c; --seg-on-fg: #ffffff;
+    --danger-soft: #3b1420; --danger-ink: #ff8798;
+    --av0-bg: #26245a; --av0-fg: #b3aaff; --av1-bg: #3a2d0b; --av1-fg: #f6c24d;
+    --av2-bg: #0f2f1c; --av2-fg: #5fe08b; --av3-bg: #3b1420; --av3-fg: #ff8798;
+    --av4-bg: #0e2a3b; --av4-fg: #6cc4f0;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .35), 0 6px 18px rgba(0, 0, 0, .25);
+    --shadow-md: 0 14px 34px rgba(0, 0, 0, .45);
+    --shadow-lg: 0 24px 60px rgba(0, 0, 0, .6);
+    --spot: rgba(122, 108, 255, .16); --spot-ink: rgba(255, 255, 255, .06);
+    --scrim: rgba(0, 0, 0, .6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c0e1f; --glow: rgba(122, 108, 255, .13);
+  --surface: #151833; --surface-2: #1b1f3d; --surface-3: #232748;
+  --fg: #eceefb; --fg-2: #bdc0de; --muted: #8e92b8; --border: #272b4f;
+  --primary: #7a6cff; --primary-strong: #8c80ff; --primary-soft: #26245a; --on-primary: #ffffff;
+  --shadow-primary: 0 8px 22px rgba(122, 108, 255, .35);
+  --ink: #12142e; --ink-2: #1c1f44; --ink-3: #262a58; --ink-fg: #eceefb; --ink-muted: #9a9dc6;
+  --amber-soft: #3a2d0b; --amber-ink: #f6c24d;
+  --indigo-soft: #26245a; --indigo-ink: #a99fff;
+  --green: #2fcf8d; --green-soft: #0e2e22; --green-ink: #5fe0a8;
+  --ink-border: #2a2e57; --glow-a: #8c80ff; --glow-b: #c4b5fd; --glow-c: #2fcf8d;
+  --seg-on: #3a3e8c; --seg-on-fg: #ffffff;
+  --danger-soft: #3b1420; --danger-ink: #ff8798;
+  --av0-bg: #26245a; --av0-fg: #b3aaff; --av1-bg: #3a2d0b; --av1-fg: #f6c24d;
+  --av2-bg: #0f2f1c; --av2-fg: #5fe08b; --av3-bg: #3b1420; --av3-fg: #ff8798;
+  --av4-bg: #0e2a3b; --av4-fg: #6cc4f0;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .35), 0 6px 18px rgba(0, 0, 0, .25);
+  --shadow-md: 0 14px 34px rgba(0, 0, 0, .45);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, .6);
+  --spot: rgba(122, 108, 255, .16); --spot-ink: rgba(255, 255, 255, .06);
+  --scrim: rgba(0, 0, 0, .6);
+  color-scheme: dark;
+}
+
+/* ---------- base ---------- */
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font); font-size: 14px; line-height: 1.6; color: var(--fg);
+  background: radial-gradient(1100px 560px at -10% -15%, var(--glow), transparent 60%), var(--bg);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; }
+button, input, select { font: inherit; color: inherit; }
+button, a, select { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+a { color: inherit; text-decoration: none; }
+.skip {
+  position: fixed; left: 16px; top: 12px; z-index: 100; padding: 10px 16px; border-radius: var(--pill);
+  background: var(--primary); color: var(--on-primary); font-weight: 600; transform: translateY(-160%); transition: transform .2s;
+}
+.skip:focus { transform: none; }
+#detail { scroll-margin-top: 16px; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+svg { flex: none; }
+.ic { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ic-sm { width: 16px; height: 16px; }
+.num { font-variant-numeric: tabular-nums; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- shell ---------- */
+.app {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px;
+  padding: 16px; padding-block: 16px; min-height: 100vh;
+}
+
+/* ---------- sidebar (colapsável, ref. 21st.dev) ---------- */
+.sidebar {
+  position: sticky; top: 16px; height: calc(100vh - 32px);
+  width: var(--side-w); display: flex; flex-direction: column; gap: 6px;
+  padding: 18px 12px 12px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--r-xl); box-shadow: var(--shadow-sm);
+  transition: width .3s cubic-bezier(.2, .8, .2, 1);
+  z-index: 40;
+}
+:is(.app.collapsed, .app.rail) .sidebar { width: var(--side-w-min); }
+.brand { display: flex; align-items: center; gap: 12px; padding: 0 6px 18px; border-bottom: 1px solid var(--border); margin-bottom: 8px; min-width: 0; }
+.brand-mark {
+  width: 44px; height: 44px; border-radius: 14px; flex: none; display: grid; place-items: center; color: #fff;
+  background: linear-gradient(140deg, var(--detail-a), var(--detail-b)); box-shadow: var(--shadow-primary);
+}
+.brand-mark .ic { width: 22px; height: 22px; }
+.brand-text { min-width: 0; overflow: hidden; white-space: nowrap; }
+.brand-name { font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
+.brand-sub { font-size: 12px; color: var(--muted); }
+.nav-group { font-size: 12px; font-weight: 600; color: var(--muted); padding: 14px 14px 4px; white-space: nowrap; overflow: hidden; }
+.nav-item {
+  position: relative; display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 14px;
+  border: 0; border-radius: var(--r-md); background: transparent; color: var(--fg-2);
+  font-size: 14px; font-weight: 600; text-align: left; white-space: nowrap;
+  transition: background .2s, color .2s;
+}
+.nav-item .ic { transition: transform .2s; }
+.nav-item:hover { background: var(--surface-2); color: var(--fg); }
+.nav-item:hover .ic { transform: translateX(2px); }
+.nav-item.active { background: var(--primary-soft); color: var(--primary); }
+.nav-item.active::before {
+  content: ""; position: absolute; left: -12px; top: 12px; bottom: 12px; width: 4px;
+  border-radius: 0 4px 4px 0; background: var(--primary);
+}
+.nav-label { overflow: hidden; }
+.nav-badge {
+  margin-left: auto; min-width: 22px; height: 22px; padding: 0 7px; border-radius: var(--pill);
+  background: var(--primary); color: var(--on-primary); font-size: 12px; font-weight: 700;
+  display: inline-grid; place-items: center;
+}
+:is(.app.collapsed, .app.rail) .nav-label, :is(.app.collapsed, .app.rail) .brand-text, :is(.app.collapsed, .app.rail) .nav-group,
+:is(.app.collapsed, .app.rail) .user-text, :is(.app.collapsed, .app.rail) .collapse-label { display: none; }
+:is(.app.collapsed, .app.rail) .nav-item { justify-content: center; padding: 0; }
+:is(.app.collapsed, .app.rail) .nav-badge { position: absolute; top: 6px; right: 8px; min-width: 18px; height: 18px; font-size: 11px; padding: 0 5px; }
+:is(.app.collapsed, .app.rail) .brand { justify-content: center; padding-inline: 0; }
+/* tooltip do item quando a sidebar está recolhida */
+:is(.app.collapsed, .app.rail) .nav-item::after {
+  content: attr(data-label); position: absolute; left: calc(100% + 14px); top: 50%;
+  transform: translate(-4px, -50%); opacity: 0; pointer-events: none;
+  background: var(--ink); color: var(--ink-fg); font-size: 12px; font-weight: 600;
+  padding: 6px 10px; border-radius: var(--r-sm); white-space: nowrap; box-shadow: var(--shadow-md);
+  transition: opacity .15s, transform .15s;
+}
+:is(.app.collapsed, .app.rail) .nav-item:hover::after, :is(.app.collapsed, .app.rail) .nav-item:focus-visible::after { opacity: 1; transform: translate(0, -50%); }
+.side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--border); padding-top: 10px; }
+.user {
+  display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: var(--r-md); min-width: 0;
+}
+:is(.app.collapsed, .app.rail) .user { justify-content: center; }
+.user-text { min-width: 0; overflow: hidden; white-space: nowrap; }
+.user-name { font-weight: 700; font-size: 14px; line-height: 1.3; }
+.user-role { font-size: 12px; color: var(--muted); }
+.collapse-btn { color: var(--muted); }
+.collapse-btn .ic { transition: transform .3s; }
+:is(.app.collapsed, .app.rail) .collapse-btn .ic { transform: rotate(180deg); }
+
+/* ---------- main / topbar ---------- */
+.main { min-width: 0; display: flex; flex-direction: column; gap: 22px; padding-block: 6px 24px; }
+#content { min-width: 0; }
+.topbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.icon-btn.menu-btn { display: none; }
+.title-block { min-width: 0; margin-right: auto; }
+.title-block h1 { font-size: 32px; font-weight: 600; letter-spacing: -.015em; }
+.title-block p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+.top-actions { display: flex; align-items: center; gap: 10px; }
+.search {
+  display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; width: 260px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--pill); color: var(--muted);
+  transition: border-color .2s, box-shadow .2s;
+}
+.search:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-soft); }
+.search input { border: 0; outline: 0; background: transparent; width: 100%; height: 100%; color: var(--fg); font-size: 16px; }
+.search input::placeholder { color: var(--muted); }
+.icon-btn {
+  position: relative; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface); border: 1px solid var(--border); color: var(--fg-2);
+  transition: background .2s, color .2s, transform .2s, box-shadow .2s;
+}
+.icon-btn:hover { color: var(--primary); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.icon-btn .dot { position: absolute; top: 10px; right: 11px; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 0 2px var(--surface); }
+.side-btn {
+  display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 14px; border: 0; border-radius: var(--r-md);
+  background: transparent; font-weight: 600; font-size: 14px; white-space: nowrap; transition: background .2s, color .2s;
+}
+.side-btn:hover { background: var(--surface-2); color: var(--fg); }
+:is(.app.collapsed, .app.rail) .side-btn { justify-content: center; padding: 0; }
+
+/* ---------- avatar ---------- */
+.av {
+  width: 40px; height: 40px; border-radius: 50%; flex: none; display: grid; place-items: center;
+  font-weight: 700; font-size: 14px; letter-spacing: .02em;
+}
+.av-sm { width: 30px; height: 30px; font-size: 12px; }
+.av-lg { width: 56px; height: 56px; font-size: 18px; }
+.av-0 { background: var(--av0-bg); color: var(--av0-fg); }
+.av-1 { background: var(--av1-bg); color: var(--av1-fg); }
+.av-2 { background: var(--av2-bg); color: var(--av2-fg); }
+.av-3 { background: var(--av3-bg); color: var(--av3-fg); }
+.av-4 { background: var(--av4-bg); color: var(--av4-fg); }
+.av-me { background: linear-gradient(140deg, var(--detail-a), var(--detail-b)); color: #fff; }
+.stack { display: flex; }
+.stack .av { box-shadow: 0 0 0 3px var(--surface); }
+.stack .av + .av { margin-left: -6px; }
+
+/* ---------- botões ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 20px;
+  border-radius: var(--pill); border: 1px solid transparent; font-weight: 600; font-size: 14px; white-space: nowrap;
+  transition: background .2s, box-shadow .2s, transform .15s, color .2s, border-color .2s;
+}
+.btn:active { transform: translateY(1px) scale(.99); }
+.btn-primary { background: var(--primary); color: var(--on-primary); }
+.btn-primary:hover { background: var(--primary-strong); box-shadow: var(--shadow-primary); }
+.btn-soft { background: var(--surface); border-color: var(--border); color: var(--fg); }
+.btn-soft:hover { border-color: var(--primary); color: var(--primary); }
+.btn-ghost { background: transparent; color: var(--fg-2); }
+.btn-ghost:hover { background: var(--surface-2); color: var(--fg); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { box-shadow: 0 8px 20px rgba(240, 71, 92, .3); }
+.btn-white { background: #fff; color: #1a1c3a; }
+.btn-white:hover { box-shadow: 0 8px 22px rgba(0, 0, 0, .25); }
+.btn-sm { height: 34px; padding: 0 14px; font-size: 13px; }
+.icon-act {
+  width: 36px; height: 36px; border-radius: 50%; display: inline-grid; place-items: center; border: 0;
+  background: transparent; color: var(--muted); transition: background .2s, color .2s;
+}
+.icon-act:hover { background: var(--surface-3); color: var(--fg); }
+.icon-act.del:hover { background: var(--danger-soft); color: var(--danger-ink); }
+
+/* ---------- segmented / pílulas (ref. Behance + Finnova) ---------- */
+.seg { display: inline-flex; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--pill); flex-wrap: wrap; }
+.seg button {
+  display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px; border: 0; border-radius: var(--pill);
+  background: transparent; color: var(--fg-2); font-weight: 600; font-size: 13px; transition: background .2s, color .2s;
+}
+.seg button:hover { color: var(--fg); background: var(--surface-2); }
+.seg button.on { background: var(--seg-on); color: var(--seg-on-fg); }
+.seg .n { min-width: 22px; height: 22px; padding: 0 7px; border-radius: var(--pill); display: inline-grid; place-items: center; font-size: 12px; background: var(--surface-3); color: var(--fg-2); }
+.seg button.on .n { background: var(--primary); color: #fff; }
+
+/* ---------- chips de status ---------- */
+.chip {
+  display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 12px; border-radius: var(--pill);
+  font-size: 12px; font-weight: 700; white-space: nowrap;
+}
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip.pend { background: var(--amber-soft); color: var(--amber-ink); }
+.chip.pend::before { background: var(--amber); }
+.chip.tran { background: var(--indigo-soft); color: var(--indigo-ink); }
+.chip.tran::before { background: var(--indigo); }
+.chip.entr { background: var(--green-soft); color: var(--green-ink); }
+.chip.entr::before { background: var(--green); }
+.chip.on { background: var(--green-soft); color: var(--green-ink); }
+.chip.on::before { background: var(--green); }
+.chip.off { background: var(--surface-3); color: var(--muted); }
+.chip.off::before { background: var(--muted); }
+
+/* ---------- cards / bento ---------- */
+.bento { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; }
+.c-3 { grid-column: span 3; } .c-4 { grid-column: span 4; } .c-5 { grid-column: span 5; }
+.c-6 { grid-column: span 6; } .c-7 { grid-column: span 7; } .c-8 { grid-column: span 8; } .c-12 { grid-column: span 12; }
+.card {
+  position: relative; min-width: 0; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-xl); box-shadow: var(--shadow-sm); padding: 22px;
+}
+.card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.card-head h2 { font-size: 18px; font-weight: 600; }
+.card-head .sub { color: var(--muted); font-size: 13px; }
+.card-head .end { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+/* hover dinâmico: spotlight que segue o cursor + leve elevação */
+.spot { overflow: hidden; isolation: isolate; }
+.spot::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0;
+  background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), var(--spot), transparent 65%);
+  transition: opacity .3s;
+}
+.spot:hover::before { opacity: 1; }
+.ink.spot::before { background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), var(--spot-ink), transparent 65%); }
+.lift { transition: transform .35s cubic-bezier(.2, .8, .2, 1), box-shadow .35s, border-color .35s; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .lift:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: transparent; }
+}
+.clickable { cursor: pointer; }
+
+/* ---------- KPI ---------- */
+.kpi { width: 100%; display: flex; flex-direction: column; gap: 14px; text-align: left; font: inherit; color: inherit; }
+.kpi-top { display: flex; align-items: center; gap: 12px; }
+.kpi-ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); color: var(--fg-2); }
+.kpi-label { font-size: 14px; font-weight: 600; color: var(--fg-2); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi-go {
+  margin-left: auto; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface-2); color: var(--muted); transition: background .25s, color .25s, transform .25s;
+}
+.kpi:hover .kpi-go { background: var(--primary); color: #fff; transform: rotate(45deg); }
+.kpi-num { font-size: 36px; font-weight: 600; line-height: 1; letter-spacing: -.02em; }
+.kpi-num small { font-size: 20px; color: var(--muted); font-weight: 500; }
+.kpi-foot { font-size: 13px; color: var(--muted); margin-top: auto; }
+.kpi-foot b { color: var(--fg); font-weight: 700; }
+/* os quatro KPIs seguem a mesma grade: topo, número, faixa visual de altura fixa, rodapé.
+   Assim número, gráfico e rodapé ficam na mesma linha nos quatro cards. */
+.kpi-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px; }
+.kpi-vis { height: 56px; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; }
+/* barra de status empilhada (pendente | em trânsito | entregue) */
+.sbar { display: flex; gap: 3px; height: 10px; border-radius: var(--pill); overflow: hidden; }
+.sbar i { display: block; height: 100%; min-width: 6px; transition: flex-grow .6s cubic-bezier(.2, .8, .2, 1); }
+.sbar-key { display: flex; gap: 12px; font-size: 12px; color: var(--muted); }
+.sbar-key span { display: inline-flex; align-items: center; gap: 5px; }
+.sbar-key i { width: 7px; height: 7px; border-radius: 50%; }
+
+/* sparkline (traduzido do componente Sparkline do 21st.dev) */
+.spark { position: relative; height: 56px; touch-action: pan-y; }
+.spark svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.spark-guide { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--primary); opacity: 0; left: 0; pointer-events: none; transition: transform .12s, opacity .15s; }
+.spark-dot {
+  position: absolute; width: 11px; height: 11px; border-radius: 50%; background: var(--primary);
+  left: 0; top: 0; box-shadow: 0 0 0 3px var(--surface); opacity: 0; pointer-events: none; transition: transform .12s, opacity .15s;
+}
+.spark.active .spark-guide { opacity: .25; }
+.spark.active .spark-dot, .spark.active .tip { opacity: 1; }
+.tip {
+  position: absolute; z-index: 5; transform: translate(-50%, calc(-100% - 10px)); opacity: 0; pointer-events: none;
+  background: var(--ink); color: var(--ink-fg); border-radius: var(--r-sm); padding: 6px 10px; font-size: 12px; font-weight: 600;
+  white-space: nowrap; box-shadow: var(--shadow-md); transition: opacity .15s, left .12s, top .12s;
+}
+.tip span { color: var(--ink-muted); font-weight: 500; margin-right: 6px; }
+
+/* mini barras (traduzido do Stats Card do 21st.dev) */
+.mbars { position: relative; display: flex; align-items: flex-end; gap: 8px; height: 56px; }
+.mbar { flex: 1; height: 100%; display: flex; align-items: flex-end; cursor: default; }
+.mbar i {
+  display: block; width: 100%; height: var(--h); border-radius: 8px 8px 4px 4px; background: var(--primary-soft);
+  transform-origin: bottom; transition: background .2s;
+}
+.mbar.hi i { background: var(--primary); }
+.mbar:hover i { background: var(--primary-strong); }
+.mbars .tip { opacity: 0; }
+.mbars.active .tip { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .grow .mbar i { animation: grow .7s cubic-bezier(.2, .9, .3, 1.15) both; animation-delay: calc(var(--i) * 60ms); }
+  .grow .fbar { animation: grow .7s cubic-bezier(.2, .9, .3, 1.1) both; animation-delay: calc(var(--i) * 50ms); }
+}
+@keyframes grow { from { transform: scaleY(.04); } }
+
+/* anel de conclusão */
+.ring-row { display: flex; align-items: center; gap: 16px; }
+.ring { width: 64px; height: 64px; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 8; stroke-linecap: round; }
+.ring .track { stroke: var(--surface-3); }
+.ring .val { stroke: var(--green); transition: stroke-dashoffset .9s cubic-bezier(.2, .8, .2, 1); }
+.segbar { display: flex; gap: 4px; }
+.segbar i { flex: 1; height: 8px; border-radius: var(--pill); background: var(--surface-3); }
+.segbar i.on { background: var(--primary); }
+
+/* ---------- gráfico de fluxo semanal ---------- */
+.legend { display: flex; gap: 16px; font-size: 13px; color: var(--fg-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; }
+.flow { position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; flex: 1; min-height: 220px; }
+.fill { display: flex; flex-direction: column; }
+.flow-y { position: relative; }
+.flow-y span { position: absolute; right: 0; transform: translateY(50%); font-size: 12px; color: var(--muted); }
+.flow-plot { position: relative; display: flex; align-items: flex-end; gap: 10px; border-bottom: 1px solid var(--border); }
+.flow-grid { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--border); pointer-events: none; }
+.fgroup { position: relative; flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 5px; border-radius: 12px; padding-top: 6px; transition: background .2s; }
+.fgroup:hover { background: var(--surface-2); }
+.fbar { width: min(18px, 34%); border-radius: 7px 7px 3px 3px; transform-origin: bottom; }
+.fbar.a { background: var(--primary); }
+.fbar.b { background: var(--green); }
+.flow-x { display: flex; gap: 10px; margin-left: 40px; margin-top: 8px; }
+.flow-x span { flex: 1; text-align: center; font-size: 12px; color: var(--muted); }
+.flow .tip { opacity: 0; }
+.flow.active .tip { opacity: 1; }
+
+/* ---------- donut de status ---------- */
+.donut-wrap { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.donut { position: relative; width: 168px; height: 168px; flex: none; margin-inline: auto; }
+.donut svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.donut circle { fill: none; stroke-width: 18; transition: stroke-width .2s, opacity .2s; }
+.donut .seg-arc { cursor: pointer; }
+.donut.hovering .seg-arc { opacity: .35; }
+.donut.hovering .seg-arc.hl { opacity: 1; stroke-width: 22; }
+.donut-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
+.donut-center b { font-size: 34px; font-weight: 600; line-height: 1; }
+.donut-center span { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.dlegend { flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: 8px; }
+.dlegend button {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 0; border-radius: var(--r-md);
+  background: var(--surface-2); text-align: left; transition: background .2s, transform .2s;
+}
+.dlegend button:hover, .dlegend button.hl { background: var(--surface-3); transform: translateX(3px); }
+.dlegend i { width: 10px; height: 10px; border-radius: 50%; }
+.dlegend .lbl { flex: 1; font-weight: 600; font-size: 13px; }
+.dlegend .val { font-weight: 700; }
+
+/* ---------- atividade (ref. Live Activity Feed do Behance) ---------- */
+.feed { display: flex; flex-direction: column; gap: 6px; }
+.feed-item {
+  display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: var(--r-lg);
+  transition: background .2s;
+}
+.feed-item:hover { background: var(--surface-2); }
+.feed-ico { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; flex: none; }
+.feed-ico.pend { background: var(--amber-soft); color: var(--amber-ink); }
+.feed-ico.tran { background: var(--indigo-soft); color: var(--indigo-ink); }
+.feed-ico.entr { background: var(--green-soft); color: var(--green-ink); }
+.feed-txt { flex: 1; min-width: 0; }
+.feed-txt b { display: block; font-weight: 700; font-size: 14px; line-height: 1.35; }
+.feed-txt span { display: block; color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.feed-time { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+/* ---------- painel escuro (ref. Unpaid Invoices da Finnova) ---------- */
+.ink { background: var(--ink); color: var(--ink-fg); border-color: var(--ink-border); }
+.ink .card-head .sub, .ink .muted { color: var(--ink-muted); }
+.ink-list { display: flex; flex-direction: column; gap: 6px; }
+.ink-item {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; border: 0; border-radius: var(--r-lg);
+  background: transparent; color: var(--ink-fg); text-align: left; transition: background .2s, transform .2s;
+}
+.ink-item:hover { background: var(--ink-2); }
+.ink-item.sel { background: linear-gradient(140deg, var(--detail-a), var(--detail-b)); box-shadow: 0 10px 26px rgba(91, 76, 240, .45); }
+.ink-item .t { flex: 1; min-width: 0; }
+.ink-item .t b { display: block; font-weight: 700; font-size: 14px; line-height: 1.35; }
+.ink-item .t span { display: block; font-size: 12px; color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ink-item.sel .t span { color: rgba(255, 255, 255, .78); }
+.ink-pin { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--ink-2); color: var(--ink-muted); flex: none; }
+.ink-item.sel .ink-pin { background: rgba(255, 255, 255, .18); color: #fff; }
+.ink .chip.pend { background: rgba(242, 172, 17, .16); color: #f6c24d; }
+.ink .chip.tran { background: rgba(122, 108, 255, .22); color: #c4bdff; }
+.ink .chip.entr { background: rgba(54, 209, 97, .16); color: #6fe397; }
+.ink-item.sel .chip { background: rgba(255, 255, 255, .92); color: #2a2470; }
+.ink-item.sel .chip::before { background: currentColor; }
+.ink-empty { padding: 28px 12px; text-align: center; color: var(--ink-muted); }
+.ink-free { margin-top: auto; padding-top: 18px; border-top: 1px solid var(--ink-2); display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
+.ink .ink-free { margin-top: auto; }
+.free-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.free { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: var(--pill); background: var(--ink-2); font-weight: 600; font-size: 13px; }
+.ink-list + .ink-free { margin-top: auto; }
+
+/* ---------- detalhe índigo (ref. Invoice details da Finnova) ---------- */
+.detail {
+  position: relative; overflow: hidden; border-radius: var(--r-xl); padding: 26px; color: #fff; min-width: 0;
+  background: linear-gradient(150deg, var(--detail-a), var(--detail-b));
+  box-shadow: 0 22px 50px rgba(75, 60, 230, .35);
+}
+.detail::after {
+  content: ""; position: absolute; width: 380px; height: 380px; right: -140px; top: -170px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .22), transparent 65%); pointer-events: none;
+}
+.d-top { display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; }
+.d-id { font-size: 30px; font-weight: 700; letter-spacing: -.01em; line-height: 1.1; }
+.d-sub { color: rgba(255, 255, 255, .78); font-size: 14px; margin-top: 4px; }
+.d-top .chip { margin-left: auto; background: rgba(255, 255, 255, .95); color: #2a2470; }
+.d-top .chip::before { background: currentColor; }
+.d-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 22px; }
+.d-tile { background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .16); border-radius: var(--r-lg); padding: 14px; min-width: 0; transition: background .2s; }
+.d-tile:hover { background: rgba(255, 255, 255, .18); }
+.d-tile small { display: block; font-size: 12px; color: rgba(255, 255, 255, .75); margin-bottom: 6px; }
+.d-tile b { display: block; font-size: 15px; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
+.steps { display: flex; align-items: center; margin-top: 22px; }
+.step { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, .65); white-space: nowrap; }
+.step i { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; border: 2px solid rgba(255, 255, 255, .4); font-style: normal; font-size: 12px; }
+.step.done, .step.now { color: #fff; }
+.step.done i { background: #fff; color: #4b3ce6; border-color: #fff; }
+.step.now i { border-color: #fff; box-shadow: 0 0 0 5px rgba(255, 255, 255, .18); }
+.step-line { flex: 1; height: 2px; margin: 0 10px; background: rgba(255, 255, 255, .25); border-radius: 2px; min-width: 14px; }
+.step-line.done { background: #fff; }
+.d-foot {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 22px; padding: 14px;
+  border-radius: var(--r-lg); background: rgba(13, 10, 60, .28);
+}
+.d-foot .note { color: rgba(255, 255, 255, .85); font-size: 13px; margin-right: auto; display: flex; align-items: center; gap: 8px; }
+.d-select {
+  height: 44px; min-width: 190px; padding: 0 16px; border-radius: var(--pill); border: 1px solid rgba(255, 255, 255, .35);
+  background: rgba(255, 255, 255, .14); color: #fff; outline: none;
+}
+.d-select option { color: #161a33; }
+.d-select:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.d-del { width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .3); background: transparent; color: #fff; display: grid; place-items: center; transition: background .2s; }
+.d-del:hover { background: rgba(240, 71, 92, .85); border-color: transparent; }
+.detail .err { color: #ffd4da; font-size: 12px; width: 100%; }
+.detail-empty { display: grid; place-items: center; text-align: center; min-height: 320px; color: rgba(255, 255, 255, .85); }
+
+/* ---------- toolbar de página ---------- */
+.toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.toolbar .end { margin-left: auto; display: flex; gap: 10px; }
+
+/* ---------- tabela (clientes) ---------- */
+.table-wrap { overflow-x: auto; margin: 0 -8px; }
+table { width: 100%; border-collapse: separate; border-spacing: 0 4px; min-width: 620px; }
+th { text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); padding: 6px 16px; white-space: nowrap; }
+td { padding: 12px 16px; background: transparent; transition: background .2s; }
+tbody tr td:first-child { border-radius: var(--r-lg) 0 0 var(--r-lg); }
+tbody tr td:last-child { border-radius: 0 var(--r-lg) var(--r-lg) 0; }
+tbody tr:hover td { background: var(--surface-2); }
+.who { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.who b { display: block; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+.who span { display: block; font-size: 12px; color: var(--muted); }
+.row-acts { display: flex; justify-content: flex-end; gap: 4px; opacity: .6; transition: opacity .2s; }
+tr:hover .row-acts, .row-acts:focus-within { opacity: 1; }
+@media (hover: none) { .row-acts { opacity: 1; } }
+.empty { padding: 36px 12px; text-align: center; color: var(--muted); }
+.empty .ic { width: 28px; height: 28px; margin-bottom: 8px; }
+
+/* ---------- motoristas em cards ---------- */
+.dgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+.dcard { display: flex; flex-direction: column; gap: 16px; }
+.dcard-top { display: flex; align-items: center; gap: 14px; }
+.dcard-top .t { min-width: 0; flex: 1; }
+.dcard-top b { display: block; font-size: 16px; font-weight: 700; line-height: 1.3; }
+.dcard-meta { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--fg-2); }
+.dcard-meta span { display: flex; align-items: center; gap: 8px; }
+.dcard-meta .ic { width: 16px; height: 16px; color: var(--muted); }
+.dstats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dstat { background: var(--surface-2); border-radius: var(--r-md); padding: 10px 12px; }
+.dstat small { display: block; font-size: 12px; color: var(--muted); }
+.dstat b { font-size: 20px; font-weight: 600; }
+.dcard-acts { display: flex; gap: 6px; justify-content: flex-end; margin-top: -6px; }
+.add-tile {
+  display: grid; place-items: center; text-align: center; gap: 10px; min-height: 260px; border: 2px dashed var(--border);
+  border-radius: var(--r-xl); background: transparent; color: var(--muted); font-weight: 600;
+  transition: border-color .25s, color .25s, background .25s;
+}
+.add-tile:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+.add-tile .plus { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); box-shadow: var(--shadow-sm); margin-inline: auto; }
+
+/* ---------- master-detail ---------- */
+.md { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 18px; align-items: start; }
+
+/* ---------- aviso de demonstração ---------- */
+.demo {
+  display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: var(--pill);
+  background: var(--primary-soft); color: var(--indigo-ink); font-size: 13px; font-weight: 600; width: fit-content; max-width: 100%;
+}
+
+.demo.off { background: var(--amber-soft); color: var(--amber-ink); }
+#content:empty::before { content: "Carregando dados…"; display: block; padding: 32px 8px; color: var(--fg-2); font-weight: 600; }
+
+/* ---------- modal ---------- */
+.modal-back { overscroll-behavior: contain; position: fixed; inset: 0; z-index: 80; background: var(--scrim); display: grid; place-items: center; padding: 16px; animation: fade .18s ease; }
+.modal {
+  overscroll-behavior: contain; width: 100%; max-width: 460px; max-height: calc(100vh - 32px); overflow-y: auto; background: var(--surface);
+  border-radius: var(--r-xl); box-shadow: var(--shadow-lg); animation: pop .22s cubic-bezier(.2, .9, .3, 1.1);
+}
+.modal-head { display: flex; align-items: center; gap: 12px; padding: 22px 22px 6px; }
+.modal-head h2 { font-size: 20px; font-weight: 700; }
+.modal-head .icon-act { margin-left: auto; }
+.modal-body { padding: 14px 22px; display: flex; flex-direction: column; gap: 14px; }
+.modal-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 8px 22px 22px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 13px; font-weight: 600; color: var(--fg-2); }
+.field input, .field select {
+  color: var(--fg); height: 46px; padding: 0 16px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--surface-2);
+  outline: none; transition: border-color .2s, box-shadow .2s, background .2s;
+}
+.field input:focus, .field select:focus { border-color: var(--primary); background: var(--surface); box-shadow: 0 0 0 4px var(--primary-soft); }
+.field.bad input, .field.bad select { border-color: var(--danger); }
+.field .err { font-size: 12px; color: var(--danger-ink); min-height: 0; }
+.field .hint { font-size: 12px; color: var(--muted); }
+.toggle { display: inline-flex; gap: 4px; padding: 4px; border-radius: var(--pill); background: var(--surface-2); border: 1px solid var(--border); width: fit-content; }
+.toggle button { height: 36px; padding: 0 18px; border: 0; border-radius: var(--pill); background: transparent; font-weight: 600; color: var(--fg-2); }
+.toggle button.on { background: var(--surface); color: var(--fg); box-shadow: var(--shadow-sm); }
+@keyframes fade { from { opacity: 0; } }
+@keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.97); } }
+
+/* ---------- toast ---------- */
+.toasts { position: fixed; right: 20px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 90; display: flex; flex-direction: column; gap: 10px; }
+.toast {
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: var(--r-md); background: var(--ink); color: var(--ink-fg);
+  font-weight: 600; font-size: 14px; box-shadow: var(--shadow-lg); animation: pop .22s ease; max-width: min(380px, calc(100vw - 40px));
+}
+.toast .ic { color: var(--green); }
+.toast.bad .ic { color: var(--danger); }
+
+/* =====================================================================
+   COMPONENTES 21st.dev (portados de React/Tailwind para CSS puro)
+   ===================================================================== */
+
+/* ---------- Glowing Effect (Aceternity / 21st.dev) ----------
+   Um arco de luz percorre a borda do card na direção do cursor.
+   Técnica do original: um pseudo-elemento com o gradiente, recortado
+   por duas máscaras (padding-box x border-box) para sobrar só a borda,
+   e uma terceira máscara cônica que deixa acesa só a fatia apontada
+   para o cursor. --start (ângulo) e --active são atualizados pelo JS. */
+.glow { position: relative; }
+.glow > .glow-ring {
+  --start: 0; --active: 0; --spread: 34;
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 2;
+}
+.glow > .glow-ring::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 2px;
+  background: conic-gradient(from 210deg, var(--glow-a), var(--glow-b), var(--glow-c), var(--glow-a));
+  /* camada 1: fatia cônica voltada para o cursor
+     camada 2 x 3: caixa inteira menos o miolo = só o anel da borda */
+  -webkit-mask:
+    conic-gradient(from calc((var(--start) - var(--spread)) * 1deg), #0000 0deg, #000, #0000 calc(var(--spread) * 2deg)) border-box,
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0) border-box;
+  -webkit-mask-composite: source-in, xor;
+  mask:
+    conic-gradient(from calc((var(--start) - var(--spread)) * 1deg), #0000 0deg, #000, #0000 calc(var(--spread) * 2deg)) border-box,
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0) border-box;
+  mask-composite: intersect, exclude;
+  opacity: var(--active); transition: opacity .35s ease;
+}
+/* toque e movimento reduzido: sem arco, só a borda acesa no foco */
+@media (hover: none), (prefers-reduced-motion: reduce) { .glow > .glow-ring { display: none; } }
+.glow:focus-visible { outline-offset: 3px; }
+
+/* ---------- Border Beam (Magic UI / 21st.dev) ----------
+   Um feixe curto anda pela borda do container. Aqui ele só aparece na
+   fila de despacho quando há entrega esperando motorista: o movimento
+   avisa "isto pede ação" e some quando a fila zera. */
+.beam { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 1; padding: 1.5px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) border-box;
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) border-box;
+  mask-composite: exclude;
+}
+.beam i {
+  position: absolute; width: 120px; aspect-ratio: 1;
+  background: linear-gradient(to left, var(--beam-a), var(--beam-b), transparent);
+  offset-path: rect(0 auto auto 0 round 26px); offset-distance: 0%;
+  animation: beam 7s linear infinite;
+}
+@keyframes beam { to { offset-distance: 100%; } }
+@supports not (offset-path: rect(0 auto auto 0)) { .beam { display: none; } }
+@media (prefers-reduced-motion: reduce) { .beam { display: none; } }
+
+/* ---------- abas com indicador deslizante ----------
+   O fundo escuro do botão ativo vira um elemento só, que desliza entre
+   as opções (padrão "animated tabs" do 21st.dev) em vez de piscar. */
+.seg { position: relative; isolation: isolate; }
+.seg-ind {
+  position: absolute; z-index: -1; top: 4px; left: 0; height: 36px; border-radius: var(--pill);
+  background: var(--seg-on); box-shadow: 0 6px 16px rgba(22, 26, 51, .18);
+  transition: transform .38s cubic-bezier(.2, .9, .25, 1), width .38s cubic-bezier(.2, .9, .25, 1);
+}
+.seg.ready button.on { background: transparent; }
+.seg button { position: relative; }
+
+/* ---------- interação nas linhas de lista ---------- */
+.feed-item .feed-ico { transition: transform .25s cubic-bezier(.2, .8, .2, 1); }
+.feed-item:hover .feed-ico { transform: scale(1.06) rotate(-4deg); }
+.ink-item:hover .ink-pin, .ink-item:hover .av { transform: scale(1.05); }
+.ink-item .ink-pin, .ink-item .av { transition: transform .25s cubic-bezier(.2, .8, .2, 1); }
+.ink-item:active, .feed-item:active, .ccard:active { transform: scale(.99); }
+tbody tr { transition: box-shadow .2s; }
+tbody tr td:first-child { box-shadow: inset 3px 0 0 transparent; transition: background .2s, box-shadow .2s; }
+tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--primary); }
+
+/* ---------- motoristas no painel escuro (fila de despacho) ---------- */
+.crew { display: flex; flex-direction: column; gap: 4px; }
+.crew-row { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-radius: var(--r-md); font-size: 13px; }
+.crew-row b { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crew-row .st { font-size: 12px; color: var(--ink-muted); white-space: nowrap; }
+.crew-row .st.livre { color: #6fe3b0; }
+
+/* ---------- cartão de modo demonstração na sidebar ---------- */
+.side-card {
+  margin: 4px 2px 0; padding: 14px; border-radius: var(--r-lg); background: var(--surface-2);
+  border: 1px solid var(--border); font-size: 12px; color: var(--fg-2); display: flex; flex-direction: column; gap: 8px;
+}
+.side-card b { font-size: 13px; color: var(--fg); display: flex; align-items: center; gap: 8px; }
+.side-card b::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 3px var(--amber-soft); }
+.side-card code { font: 600 11.5px/1.4 var(--font); color: var(--primary); overflow-wrap: anywhere; }
+:is(.app.collapsed, .app.rail) .side-card { display: none; }
+/* conectado à API: o ponto do cartão fica verde */
+.side-card.api b::before { background: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
+
+/* ---------- resumo do topo das telas de cadastro ---------- */
+.mini-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.mstat { display: flex; align-items: center; gap: 14px; padding: 16px 18px; }
+.mstat .kpi-ico { width: 40px; height: 40px; flex: none; }
+.mstat small { display: block; font-size: 12px; color: var(--muted); font-weight: 600; }
+.mstat b { font-size: 22px; font-weight: 600; line-height: 1.2; }
+.mstat b span { font-size: 14px; color: var(--muted); font-weight: 500; }
+
+/* ---------- clientes em cartões (só no celular) ---------- */
+.ccards { display: none; flex-direction: column; gap: 10px; }
+.ccard { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: var(--r-lg); background: var(--surface-2); }
+.ccard .t { flex: 1; min-width: 0; }
+.ccard .t b { display: block; font-weight: 700; line-height: 1.3; overflow-wrap: break-word; }
+.ccard .t span { display: block; font-size: 12px; color: var(--muted); }
+.ccard .meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.ccard .meta .chip { height: 22px; padding: 0 9px; font-size: 11px; }
+.ccard .acts { display: flex; gap: 2px; }
+
+/* ---------- barra de abas inferior (celular) ---------- */
+.tabbar { display: none; }
+
+/* ---------- detalhe como folha deslizante (telas estreitas) ---------- */
+.sheet-close { display: none; }
+
+/* ---------- scrim mobile ---------- */
+.scrim { display: none; }
+
+/* ---------- responsivo ----------
+   > 1100px  sidebar inteira (o usuário pode recolher)
+   641-1100  trilho de ícones fixo, com tooltip (padrão "navigation rail")
+   <= 640    barra de abas inferior; sidebar some
+   <= 1024   o detalhe da entrega abre como folha deslizante sobre a lista */
+@media (max-width: 1240px) {
+  .c-3 { grid-column: span 6; }
+  .c-4, .c-5, .c-7, .c-8 { grid-column: span 12; }
+  .search { width: 220px; }
+}
+@media (max-width: 1100px) {
+  .collapse-btn { display: none; }
+  .side-foot { border-top: 0; }
+}
+@media (max-width: 1024px) {
+  .md { grid-template-columns: 1fr; }
+  /* detalhe vira folha: sobe de baixo e cobre a lista, sem perder o lugar nela */
+  .md .detail {
+    position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 70;
+    max-height: calc(100vh - 96px); overflow-y: auto; overscroll-behavior: contain;
+    transform: translateY(calc(100% + 40px)); visibility: hidden;
+    transition: transform .38s cubic-bezier(.2, .9, .25, 1), visibility 0s linear .38s;
+  }
+  .md.sheet-open .detail { transform: none; visibility: visible; transition: transform .38s cubic-bezier(.2, .9, .25, 1); }
+  .md .detail-empty { display: none; }
+  .sheet-back { position: fixed; inset: 0; z-index: 65; background: var(--scrim); opacity: 0; pointer-events: none; transition: opacity .3s; }
+  .md.sheet-open .sheet-back { opacity: 1; pointer-events: auto; }
+  .md .detail .d-top { padding-right: 52px; }
+  .md .detail .d-top .chip { margin-left: 0; }
+  .sheet-close {
+    position: absolute; top: 18px; right: 18px; z-index: 3;
+    display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; flex: none;
+    border: 1px solid rgba(255, 255, 255, .3); background: rgba(255, 255, 255, .14); color: #fff;
+  }
+  .sheet-grip { display: block; width: 44px; height: 5px; border-radius: 5px; background: rgba(255, 255, 255, .45); margin: -10px auto 14px; }
+}
+@media (min-width: 1025px) { .sheet-back, .sheet-grip { display: none; } }
+/* com a sidebar inteira aberta, o cartão dela já avisa do modo demonstração */
+@media (min-width: 1101px) { .app:not(.collapsed) #demoBanner { display: none; } }
+@media (max-width: 860px) {
+  .mini-stats { grid-template-columns: 1fr 1fr; }
+  .mini-stats .mstat:last-child { grid-column: span 2; }
+}
+@media (max-width: 640px) {
+  .app { grid-template-columns: minmax(0, 1fr); padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
+  .sidebar { display: none; }
+  .tabbar {
+    display: flex; position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); z-index: 50;
+    padding: 6px; gap: 4px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-xl); box-shadow: var(--shadow-md);
+  }
+  .tabbar a {
+    position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 8px 4px 7px; border-radius: var(--r-lg); color: var(--muted); font-size: 11px; font-weight: 600;
+    transition: background .2s, color .2s;
+  }
+  .tabbar a.active { background: var(--primary-soft); color: var(--primary); }
+  .tabbar .nav-badge { position: absolute; top: 3px; left: calc(50% + 6px); min-width: 18px; height: 18px; font-size: 11px; padding: 0 5px; margin: 0; }
+  .icon-btn.menu-btn { display: none; }
+  .md .detail { bottom: calc(92px + env(safe-area-inset-bottom, 0px)); max-height: calc(100vh - 170px); }
+
+  .c-3 { grid-column: span 6; }
+  .bento { gap: 12px; }
+  .topbar { gap: 10px; }
+  .title-block { flex: 1; }
+  .title-block h1 { font-size: 24px; }
+  .title-block p { font-size: 13px; }
+  .top-actions { display: contents; }
+  .search { order: 3; width: 100%; height: 42px; }
+  .icon-btn { width: 40px; height: 40px; }
+  .card { padding: 16px; }
+  .kpi { gap: 10px; }
+  .kpi-go { display: none; }
+  .kpi-ico { width: 32px; height: 32px; }
+  .kpi-ico .ic { width: 16px; height: 16px; }
+  .kpi-label { font-size: 13px; }
+  .kpi-num { font-size: 30px; }
+  .kpi-num small { font-size: 16px; }
+  .ring { width: 40px; height: 40px; }
+  .kpi-vis, .spark, .mbars { height: 44px; }
+  .sbar-key { display: none; }
+  .mbars { gap: 5px; }
+  .card-head { flex-wrap: wrap; }
+  .card-head .end.legend { margin-left: 0; width: 100%; }
+  .flow { min-height: 180px; }
+  .flow-plot, .flow-x { gap: 4px; }
+  .feed-item { padding: 10px 4px; gap: 12px; }
+  .feed-ico { width: 38px; height: 38px; border-radius: 12px; }
+  .d-tiles { grid-template-columns: 1fr; }
+  .detail { padding: 20px; }
+  .d-id { font-size: 26px; }
+  .steps { align-items: flex-start; }
+  .step { flex-direction: column; gap: 6px; font-size: 11.5px; }
+  .step-line { margin-top: 12px; margin-inline: 6px; }
+  .d-tile { padding: 12px 14px; }
+  .d-tiles { gap: 8px; }
+  /* rodapé de ação: cada controle numa linha cheia */
+  .d-foot .note { width: 100%; }
+  .d-select { width: 100%; flex: 1 1 100%; }
+  .d-foot .btn-white { flex: 1; }
+
+  .toolbar .end { margin-left: 0; width: 100%; }
+  .toolbar .end .btn { flex: 1; }
+  /* filtros: uma linha só, rolando de lado, com borda esmaecida avisando que há mais */
+  .toolbar .seg { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; max-width: 100%;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent); }
+  .toolbar .seg::-webkit-scrollbar { display: none; }
+  .seg button { flex: none; }
+  .table-wrap { display: none; }
+  .ccards { display: flex; }
+  .mini-stats, .mini-stats .mstat:last-child { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-column: auto; }
+  .mini-stats { gap: 8px; }
+  .mstat { padding: 12px; gap: 6px; flex-direction: column; align-items: flex-start; }
+  .mstat .kpi-ico { display: none; }
+  .mstat small { font-size: 11px; line-height: 1.3; }
+  .mstat b { font-size: 20px; }
+  /* a lista de clientes deixa de ser card dentro de card */
+  .list-card { background: transparent; border: 0; box-shadow: none; padding: 0; }
+  .list-card .ccard { background: var(--surface); border: 1px solid var(--border); }
+  .dgrid { grid-template-columns: 1fr; gap: 12px; }
+  .add-tile { min-height: 120px; }
+  .toasts { left: 12px; right: 12px; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+  .toast { max-width: none; }
+  .modal-back { place-items: end center; padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px)); }
+  .modal-foot .btn { flex: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#content">Pular para o conteúdo</a>
+<div class="app" id="app">
+  <div class="scrim" id="scrim"></div>
+
+  <!-- ===================== SIDEBAR (colapsável) ===================== -->
+  <nav class="sidebar" aria-label="Navegação principal">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg class="ic" viewBox="0 0 24 24"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>
+      </div>
+      <div class="brand-text">
+        <div class="brand-name" translate="no">Rota ERP</div>
+        <div class="brand-sub">Gestão logística</div>
+      </div>
+    </div>
+
+    <div class="nav-group">Operação</div>
+    <a class="nav-item" href="#dashboard" data-view="dashboard" data-label="Painel">
+      <svg class="ic" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+      <span class="nav-label">Painel</span>
+    </a>
+    <a class="nav-item" href="#entregas" data-view="entregas" data-label="Entregas">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
+      <span class="nav-label">Entregas</span>
+      <span class="nav-badge num" id="badgePend" title="Aguardando despacho">0</span>
+    </a>
+
+    <div class="nav-group">Cadastros</div>
+    <a class="nav-item" href="#clientes" data-view="clientes" data-label="Clientes">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span class="nav-label">Clientes</span>
+    </a>
+    <a class="nav-item" href="#motoristas" data-view="motoristas" data-label="Motoristas">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/></svg>
+      <span class="nav-label">Motoristas</span>
+    </a>
+
+    <div class="side-foot">
+      <div class="side-card" id="modoCard" role="note">
+        <b>Conectando…</b>
+        <span>Procurando a API do Mini ERP.</span>
+        <code translate="no">localhost:5185</code>
+      </div>
+      <div class="user">
+        <div class="av av-me av-sm" aria-hidden="true">GT</div>
+        <div class="user-text">
+          <div class="user-name">Gustavo Telles</div>
+          <div class="user-role">Administrador</div>
+        </div>
+      </div>
+      <button class="side-btn collapse-btn" id="collapseBtn" aria-label="Recolher menu" aria-expanded="true">
+        <svg class="ic" viewBox="0 0 24 24"><path d="m11 17-5-5 5-5"/><path d="m18 17-5-5 5-5"/></svg>
+        <span class="collapse-label">Recolher menu</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===================== ÁREA PRINCIPAL ===================== -->
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn menu-btn" id="menuBtn" aria-label="Abrir menu">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg>
+      </button>
+      <div class="title-block">
+        <h1 id="pageTitle">Painel</h1>
+        <p id="pageSub"></p>
+      </div>
+      <div class="top-actions">
+        <label class="search" id="searchBox">
+          <svg class="ic ic-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <span class="sr">Buscar</span>
+          <input id="search" type="search" name="busca" placeholder="Buscar nesta tela…" autocomplete="off">
+        </label>
+        <button class="icon-btn" id="themeBtn" aria-label="Alternar tema"></button>
+        <button class="icon-btn" aria-label="Notificações" id="bellBtn">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span class="dot" id="bellDot"></span>
+        </button>
+      </div>
+    </header>
+
+    <main id="content" tabindex="-1"></main>
+  </div>
+
+  <!-- barra de abas inferior: substitui a sidebar no celular -->
+  <nav class="tabbar" aria-label="Navegação principal">
+    <a href="#dashboard" data-view="dashboard"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>Painel</a>
+    <a href="#entregas" data-view="entregas"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>Entregas<span class="nav-badge num" id="badgeTab">0</span></a>
+    <a href="#clientes" data-view="clientes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</a>
+    <a href="#motoristas" data-view="motoristas"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/></svg>Motoristas</a>
+  </nav>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div id="modalHost"></div>
+
+<script>
+/* =====================================================================
+   CAMADA DE DADOS — conversa com a MiniErpApi (C#).
+   - Leituras (listar/achar) são síncronas: vêm de um cache em memória
+     que é preenchido com GET na API.
+   - Alterações (criar/editar/excluir/status) são async: chamam a API e,
+     se der certo, recarregam o cache. Devolvem { ok, dado } ou { erro }.
+   - Se a API não responder (ex.: página aberta fora do PC), entra o
+     MODO DEMONSTRAÇÃO: um "servidor falso" com as mesmas regras da API.
+     Endpoints usados:
+       GET/POST        /clientes      PUT/DELETE /clientes/{id}
+       GET/POST        /motoristas    PUT/DELETE /motoristas/{id}
+       GET/POST        /entregas      DELETE     /entregas/{id}
+       PUT /entregas/{id}  { status, motoristaId }  (despacho / entregue)
+   ===================================================================== */
+
+// Servido pela própria API (localhost)? Usa a mesma origem.
+// Aberto como arquivo? Tenta a API na porta padrão do projeto.
+const API_BASE = ["localhost", "127.0.0.1"].includes(location.hostname)
+  ? location.origin
+  : "http://localhost:5185";
+
+// Erro padronizado: guarda o status HTTP e uma mensagem pronta para o usuário.
+class ErroApi extends Error {
+  constructor(status, msg) { super(msg); this.status = status; }
+}
+
+// A API responde sem acento (padrão do back). Aqui traduzimos para a interface.
+const MSG = {
+  "Cliente nao encontrado.": "Cliente não encontrado.",
+  "Motorista nao encontrado.": "Motorista não encontrado.",
+  "Para despachar (Em transito) e necessario informar o motorista.": "Para despachar é necessário escolher um motorista.",
+  "Este cliente possui entregas vinculadas e nao pode ser excluido.": "Este cliente tem entregas vinculadas e não pode ser excluído. Exclua as entregas dele primeiro.",
+  "Este motorista possui entregas vinculadas e nao pode ser excluido.": "Este motorista tem entregas vinculadas e não pode ser excluído. Exclua as entregas dele primeiro.",
+};
+
+const DB = (() => {
+  let modo = "api";                                   // "api" | "demo"
+  let cache = { clientes: [], motoristas: [], entregas: [] };
+
+  /* ---------- chamada real à API ---------- */
+  async function http(metodo, rota, corpo) {
+    let r;
+    try {
+      r = await fetch(API_BASE + rota, {
+        method: metodo,
+        headers: corpo ? { "Content-Type": "application/json" } : {},
+        body: corpo ? JSON.stringify(corpo) : undefined,
+      });
+    } catch {
+      throw new ErroApi(0, "Não foi possível falar com a API. Confira se ela está rodando (dotnet run).");
+    }
+    if (r.status === 404) throw new ErroApi(404, "Registro não encontrado. A lista foi atualizada.");
+    if (!r.ok) {
+      // BadRequest("texto") chega como string JSON: "\"Cliente nao encontrado.\""
+      let txt = await r.text();
+      try { txt = JSON.parse(txt); } catch { /* já é texto puro */ }
+      if (typeof txt !== "string" || !txt) txt = `A API recusou a operação (erro ${r.status}).`;
+      throw new ErroApi(r.status, MSG[txt] || txt);
+    }
+    return r.status === 204 ? null : r.json();
+  }
+
+  /* ---------- "servidor falso" do modo demonstração ----------
+     Mesmas rotas e mesmas regras do Program.cs da API. */
+  const base = {
+    clientes: [
+      { id: 1, nome: "Maria Silva", idade: 34, ativo: true },
+      { id: 2, nome: "José Carlos", idade: 41, ativo: true },
+      { id: 3, nome: "Alberto Nóbrega", idade: 58, ativo: false },
+      { id: 4, nome: "Renata Lopes", idade: 29, ativo: true },
+      { id: 5, nome: "Distribuidora Piracicaba", idade: 37, ativo: true },
+    ],
+    motoristas: [
+      { id: 1, nome: "João Souza", cnh: "12345678900", telefone: "(19) 99812-0451" },
+      { id: 2, nome: "Pedro Ramos", cnh: "98765432100", telefone: "(19) 99734-2210" },
+      { id: 3, nome: "Carlos Nunes", cnh: "45678912300", telefone: "(19) 99655-7782" },
+    ],
+    entregas: [
+      { id: 1, endereco: "Rua das Flores, 123 - Centro, Limeira", status: "Entregue", clienteId: 1, motoristaId: 1 },
+      { id: 2, endereco: "Av. Brasil, 890 - Jd. América, Limeira", status: "Em transito", clienteId: 2, motoristaId: 2 },
+      { id: 3, endereco: "Rua Gomes, 75 - Vila Nova, Piracicaba", status: "Pendente", clienteId: 1, motoristaId: null },
+      { id: 4, endereco: "Rua XV de Novembro, 400 - Centro, Americana", status: "Em transito", clienteId: 4, motoristaId: 3 },
+      { id: 5, endereco: "Al. Santos, 12 - Boa Vista, Limeira", status: "Pendente", clienteId: 5, motoristaId: null },
+      { id: 6, endereco: "Av. Campinas, 2200 - Distrito Industrial, Limeira", status: "Entregue", clienteId: 5, motoristaId: 2 },
+    ],
+  };
+  const nextId = arr => arr.reduce((m, x) => Math.max(m, x.id), 0) + 1;
+  const falha = msg => { throw new ErroApi(400, MSG[msg] || msg); };
+
+  async function demo(metodo, rota, corpo) {
+    const [, recurso, idTxt] = rota.split("/");
+    const tab = base[recurso], id = Number(idTxt);
+    const item = idTxt ? tab.find(x => x.id === id) : null;
+    if (idTxt && !item) throw new ErroApi(404, "Registro não encontrado. A lista foi atualizada.");
+
+    if (metodo === "GET") {
+      if (recurso !== "entregas") return structuredClone(tab);
+      // igual ao Include(Cliente).Include(Motorista) da API
+      return tab.map(e => ({
+        ...e,
+        cliente: base.clientes.find(c => c.id === e.clienteId) || null,
+        motorista: base.motoristas.find(m => m.id === e.motoristaId) || null,
+      }));
+    }
+    if (metodo === "POST") {
+      if (recurso === "entregas") {
+        if (!base.clientes.some(c => c.id === corpo.clienteId)) falha("Cliente nao encontrado.");
+        corpo = { status: "Pendente", motoristaId: null, ...corpo };
+      }
+      const novo = { ...corpo, id: nextId(tab) };
+      tab.push(novo);
+      return novo;
+    }
+    if (metodo === "PUT") {
+      if (recurso === "entregas") {
+        if (corpo.status === "Em transito") {
+          if (corpo.motoristaId == null) falha("Para despachar (Em transito) e necessario informar o motorista.");
+          if (!base.motoristas.some(m => m.id === corpo.motoristaId)) falha("Motorista nao encontrado.");
+          item.motoristaId = corpo.motoristaId;
+        }
+        item.status = corpo.status;
+      } else {
+        Object.assign(item, corpo, { id });
+      }
+      return item;
+    }
+    if (metodo === "DELETE") {
+      // proteção de integridade, igual à API
+      if (recurso === "clientes" && base.entregas.some(e => e.clienteId === id)) falha("Este cliente possui entregas vinculadas e nao pode ser excluido.");
+      if (recurso === "motoristas" && base.entregas.some(e => e.motoristaId === id)) falha("Este motorista possui entregas vinculadas e nao pode ser excluido.");
+      base[recurso] = tab.filter(x => x.id !== id);
+      return null;
+    }
+  }
+
+  // Escolhe o "servidor" de acordo com o modo atual.
+  const chamar = (metodo, rota, corpo) => (modo === "api" ? http : demo)(metodo, rota, corpo);
+
+  // Busca as três listas de uma vez e atualiza o cache.
+  async function carregar() {
+    const [clientes, motoristas, entregas] = await Promise.all([
+      chamar("GET", "/clientes"), chamar("GET", "/motoristas"), chamar("GET", "/entregas"),
+    ]);
+    cache = { clientes, motoristas, entregas };
+  }
+
+  // Executa uma alteração e recarrega o cache. Nunca lança erro: devolve { erro }.
+  async function executar(metodo, rota, corpo) {
+    try {
+      const dado = await chamar(metodo, rota, corpo);
+      await carregar();
+      return { ok: true, dado };
+    } catch (e) {
+      if (e.status === 404) await carregar().catch(() => {});
+      return { erro: e.message || "Algo deu errado. Tente de novo." };
+    }
+  }
+
+  return {
+    // Primeira carga: tenta a API; se não responder, liga o modo demonstração.
+    async iniciar() {
+      try { await carregar(); }
+      catch { modo = "demo"; await carregar(); }
+      return modo;
+    },
+    modo: () => modo,
+    recarregar: () => carregar(),
+
+    // ----- Clientes -----
+    listarClientes: () => cache.clientes,
+    acharCliente: id => cache.clientes.find(c => c.id === id),
+    criarCliente: d => executar("POST", "/clientes", d),
+    editarCliente: (id, d) => executar("PUT", `/clientes/${id}`, d),
+    excluirCliente: id => executar("DELETE", `/clientes/${id}`),
+
+    // ----- Motoristas -----
+    listarMotoristas: () => cache.motoristas,
+    acharMotorista: id => cache.motoristas.find(m => m.id === id),
+    criarMotorista: d => executar("POST", "/motoristas", d),
+    editarMotorista: (id, d) => executar("PUT", `/motoristas/${id}`, d),
+    excluirMotorista: id => executar("DELETE", `/motoristas/${id}`),
+
+    // ----- Entregas (já vêm com cliente e motorista, via Include na API) -----
+    listarEntregas: () => cache.entregas,
+    criarEntrega: d => executar("POST", "/entregas", { ...d, status: "Pendente", motoristaId: null }),
+    atualizarStatusEntrega: (id, status, motoristaId) => executar("PUT", `/entregas/${id}`, { status, motoristaId }),
+    excluirEntrega: id => executar("DELETE", `/entregas/${id}`),
+  };
+})();
+
+/* Séries dos gráficos: dados de demonstração. A API ainda não guarda datas,
+   então o histórico semanal é ilustrativo; o último ponto usa o valor real. */
+const DEMO = {
+  cadastradas: [3, 5, 4, 6, 7, 2, 4],
+  entregues:   [2, 4, 4, 5, 6, 2, 3],
+  emTransito:  [1, 2, 3, 2, 3, 1, 2],
+};
+</script>
+
+<script>
+/* =====================================================================
+   INTERFACE — renderização das telas, gráficos e interações.
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- ícones (Lucide, inline) ---------- */
+const P = {
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  edit: '<path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+  truck: '<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>',
+  pkg: '<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  ccheck: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  pin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  arrow: '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>',
+  phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  card: '<path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  send: '<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+  moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  alert: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+};
+const ico = (k, cls = "") => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[k]}</svg>`;
+
+/* ---------- vocabulário de status (o banco guarda "Em transito") ---------- */
+const ST = {
+  "Pendente":    { cls: "pend", label: "Pendente" },
+  "Em transito": { cls: "tran", label: "Em trânsito" },
+  "Entregue":    { cls: "entr", label: "Entregue" },
+};
+const chip = s => `<span class="chip ${ST[s].cls}">${ST[s].label}</span>`;
+const code = id => "ENT-" + String(id).padStart(3, "0");
+const codeHTML = id => `<span translate="no">${code(id)}</span>`;
+const iniciais = n => n.trim().split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]).join("").toUpperCase();
+const avatar = (nome, id, cls = "") => `<div class="av av-${id % 5} ${cls}" aria-hidden="true">${esc(iniciais(nome))}</div>`;
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+const glowRing = '<span class="glow-ring" aria-hidden="true"></span>';
+
+/* últimos 7 dias (rótulos curtos em pt-BR, terminando hoje) */
+const DIAS = (() => {
+  const out = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const s = d.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "");
+    out.push(i === 0 ? "Hoje" : s.charAt(0).toUpperCase() + s.slice(1));
+  }
+  return out;
+})();
+
+/* ---------- estado da interface ---------- */
+const S = { view: "dashboard", busca: "", fEnt: "todas", fCli: "todos", sel: null, sheet: false, animou: false };
+/* telas estreitas: o detalhe da entrega abre como folha (ver CSS ≤1024px) */
+const estreito = () => matchMedia("(max-width: 1024px)").matches;
+const pref = {
+  get(k) { try { return localStorage.getItem("rota-" + k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem("rota-" + k, v); } catch {} },
+};
+
+/* =====================================================================
+   COMPONENTES DE GRÁFICO
+   ===================================================================== */
+
+/* Sparkline — traduzido do componente "Sparkline" (21st.dev / appica-dev):
+   curva suavizada, preenchimento em gradiente e, no hover, guia + ponto + tooltip. */
+function sparkPath(data, h, smoothing = 0.5) {
+  const lo = Math.min(...data), hi = Math.max(...data), span = hi - lo || 1, inset = 4, plot = h - inset * 2;
+  const pts = data.map((v, i) => ({ x: data.length === 1 ? 50 : (i / (data.length - 1)) * 100, y: inset + (1 - (v - lo) / span) * plot }));
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    const c1x = p1.x + ((p2.x - p0.x) / 6) * smoothing, c1y = p1.y + ((p2.y - p0.y) / 6) * smoothing;
+    const c2x = p2.x - ((p3.x - p1.x) / 6) * smoothing, c2y = p2.y - ((p3.y - p1.y) / 6) * smoothing;
+    d += ` C ${c1x.toFixed(2)} ${c1y.toFixed(2)}, ${c2x.toFixed(2)} ${c2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+  }
+  return { d, fill: `${d} L 100 ${h} L 0 ${h} Z`, pts };
+}
+function sparkline(data, labels, unit) {
+  const h = 56, g = sparkPath(data, h);
+  return `
+    <div class="spark" data-series="${data.join(",")}" data-labels="${labels.join(",")}" data-unit="${unit}" role="img"
+         aria-label="Últimos 7 dias: ${data.join(", ")} ${unit}">
+      <svg viewBox="0 0 100 ${h}" preserveAspectRatio="none" aria-hidden="true">
+        <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" style="stop-color:var(--primary);stop-opacity:.28"/>
+          <stop offset="100%" style="stop-color:var(--primary);stop-opacity:0"/>
+        </linearGradient></defs>
+        <path d="${g.fill}" fill="url(#sg)"/>
+        <path d="${g.d}" fill="none" style="stroke:var(--primary)" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+      </svg>
+      <span class="spark-guide"></span><span class="spark-dot"></span><div class="tip"></div>
+    </div>`;
+}
+function bindSparks() {
+  $$(".spark").forEach(el => {
+    const data = el.dataset.series.split(",").map(Number), labels = el.dataset.labels.split(","), unit = el.dataset.unit;
+    const g = sparkPath(data, 56), guide = el.querySelector(".spark-guide"), dot = el.querySelector(".spark-dot"), tip = el.querySelector(".tip");
+    const show = ev => {
+      const r = el.getBoundingClientRect(), t = Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width));
+      const i = Math.round(t * (data.length - 1)), p = g.pts[i];
+      const px = (p.x / 100) * r.width, py = (p.y / 56) * r.height;
+      guide.style.transform = `translateX(${px - .5}px)`;
+      dot.style.transform = `translate(${px - 5.5}px, ${py - 5.5}px)`;
+      tip.style.left = p.x + "%"; tip.style.top = (p.y / 56) * 100 + "%";
+      tip.innerHTML = `<span>${esc(labels[i])}</span>${data[i]} ${esc(unit)}`;
+      el.classList.add("active");
+    };
+    el.addEventListener("pointermove", show);
+    el.addEventListener("pointerdown", show);
+    el.addEventListener("pointerleave", () => el.classList.remove("active"));
+  });
+}
+
+/* Mini barras — traduzido do "Stats Card" (21st.dev / kavikatiyar):
+   barras crescem em sequência, a última (hoje) fica destacada. */
+function minibars(data, labels, unit) {
+  const max = Math.max(...data, 1);
+  return `
+    <div class="mbars ${S.animou ? "" : "grow"}" role="img" aria-label="Últimos 7 dias: ${data.join(", ")} ${unit}">
+      ${data.map((v, i) => `<div class="mbar ${i === data.length - 1 ? "hi" : ""}" data-v="${v}" data-l="${esc(labels[i])}" data-u="${unit}"><i style="--h:${Math.max(8, (v / max) * 100)}%;--i:${i}"></i></div>`).join("")}
+      <div class="tip"></div>
+    </div>`;
+}
+function bindBars() {
+  $$(".mbars").forEach(box => {
+    const tip = box.querySelector(".tip");
+    box.querySelectorAll(".mbar").forEach(b => {
+      b.addEventListener("pointerenter", () => {
+        const bi = b.querySelector("i"), r = box.getBoundingClientRect(), rb = bi.getBoundingClientRect();
+        tip.style.left = (rb.left - r.left + rb.width / 2) + "px";
+        tip.style.top = (rb.top - r.top) + "px";
+        tip.innerHTML = `<span>${esc(b.dataset.l)}</span>${b.dataset.v} ${esc(b.dataset.u)}`;
+        box.classList.add("active");
+      });
+    });
+    box.addEventListener("pointerleave", () => box.classList.remove("active"));
+  });
+}
+
+/* Contador animado (AnimatedValue do Stats Card) */
+function animateCounts() {
+  $$("[data-count]").forEach(el => {
+    const to = Number(el.dataset.count);
+    if (reduceMotion || S.animou) { el.textContent = to; return; }
+    const t0 = performance.now(), dur = 700;
+    const tick = now => {
+      const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(to * e);
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
+/* Gráfico de fluxo semanal: cadastradas x entregues, escala com marcas 0 / metade / topo */
+function flowChart(a, b, labels) {
+  const topo = Math.max(2, Math.ceil(Math.max(...a, ...b) / 2) * 2);
+  const ticks = [0, topo / 2, topo];
+  return `
+    <div class="flow ${S.animou ? "" : "grow"}" role="img" aria-label="Entregas por dia nos últimos 7 dias">
+      <div class="flow-y">${ticks.map(t => `<span style="bottom:${(t / topo) * 100}%">${t}</span>`).join("")}</div>
+      <div class="flow-plot">
+        ${ticks.slice(1).map(t => `<div class="flow-grid" style="bottom:${(t / topo) * 100}%"></div>`).join("")}
+        ${a.map((v, i) => `
+          <div class="fgroup" data-i="${i}">
+            <div class="fbar a" style="height:${(v / topo) * 100}%;--i:${i}"></div>
+            <div class="fbar b" style="height:${(b[i] / topo) * 100}%;--i:${i}"></div>
+          </div>`).join("")}
+        <div class="tip"></div>
+      </div>
+    </div>
+    <div class="flow-x">${labels.map(l => `<span>${esc(l)}</span>`).join("")}</div>`;
+}
+function bindFlow(a, b, labels) {
+  const flow = $(".flow"); if (!flow) return;
+  const plot = flow.querySelector(".flow-plot"), tip = plot.querySelector(".tip");
+  plot.querySelectorAll(".fgroup").forEach(g => {
+    g.addEventListener("pointerenter", () => {
+      const i = Number(g.dataset.i), r = plot.getBoundingClientRect(), rg = g.getBoundingClientRect();
+      const topBar = Math.max(a[i], b[i]);
+      tip.style.left = (rg.left - r.left + rg.width / 2) + "px";
+      tip.style.top = (r.height - (topBar / Math.max(2, Math.ceil(Math.max(...a, ...b) / 2) * 2)) * r.height) + "px";
+      tip.innerHTML = `<span>${esc(labels[i])}</span>${plural(a[i], "cadastrada", "cadastradas")}, ${plural(b[i], "entregue", "entregues")}`;
+      flow.classList.add("active");
+    });
+  });
+  plot.addEventListener("pointerleave", () => flow.classList.remove("active"));
+}
+
+/* Donut de status com destaque no hover (arco + legenda sincronizados) */
+function donut(counts) {
+  const total = counts.reduce((s, c) => s + c.n, 0);
+  const r = 70, C = 2 * Math.PI * r, gap = total > 1 ? 4 : 0;
+  let off = 0;
+  const arcs = counts.map(c => {
+    const len = total ? (c.n / total) * C : 0;
+    const seg = c.n ? `<circle class="seg-arc" data-k="${c.k}" cx="84" cy="84" r="${r}" style="stroke:${c.color}"
+      stroke-dasharray="${Math.max(0, len - gap)} ${C}" stroke-dashoffset="${-off}"/>` : "";
+    off += len; return seg;
+  }).join("");
+  return `
+    <div class="donut-wrap">
+      <div class="donut" id="donut">
+        <svg viewBox="0 0 168 168" aria-hidden="true"><circle cx="84" cy="84" r="${r}" style="stroke:var(--surface-3)"/>${arcs}</svg>
+        <div class="donut-center"><b class="num" id="donutN">${total}</b><span id="donutL">${total === 1 ? "entrega" : "entregas"}</span></div>
+      </div>
+      <div class="dlegend">
+        ${counts.map(c => `<button data-k="${c.k}" data-n="${c.n}" data-lbl="${c.label}" aria-label="${c.label}: ${c.n}">
+          <i style="background:${c.color}"></i><span class="lbl">${c.label}</span><span class="val num">${c.n}</span></button>`).join("")}
+      </div>
+    </div>`;
+}
+function bindDonut(total) {
+  const d = $("#donut"); if (!d) return;
+  const n = $("#donutN"), l = $("#donutL");
+  const on = k => {
+    const btn = $(`.dlegend button[data-k="${k}"]`);
+    d.classList.add("hovering");
+    $$(".seg-arc").forEach(a => a.classList.toggle("hl", a.dataset.k === k));
+    $$(".dlegend button").forEach(b => b.classList.toggle("hl", b.dataset.k === k));
+    n.textContent = btn.dataset.n; l.textContent = btn.dataset.lbl.toLowerCase();
+  };
+  const off = () => {
+    d.classList.remove("hovering"); $$(".dlegend button").forEach(b => b.classList.remove("hl"));
+    n.textContent = total; l.textContent = total === 1 ? "entrega" : "entregas";
+  };
+  $$(".seg-arc").forEach(a => { a.addEventListener("pointerenter", () => on(a.dataset.k)); a.addEventListener("pointerleave", off); });
+  $$(".dlegend button").forEach(b => {
+    b.addEventListener("pointerenter", () => on(b.dataset.k)); b.addEventListener("pointerleave", off);
+    b.addEventListener("focus", () => on(b.dataset.k)); b.addEventListener("blur", off);
+    b.addEventListener("click", () => irPara("entregas", { fEnt: b.dataset.k }));
+  });
+}
+
+/* =====================================================================
+   TELAS
+   ===================================================================== */
+function saudacao() {
+  const h = new Date().getHours();
+  return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+}
+
+/* ---------- PAINEL ---------- */
+function viewDashboard() {
+  const E = DB.listarEntregas(), M = DB.listarMotoristas();
+  const pend = E.filter(e => e.status === "Pendente"), tran = E.filter(e => e.status === "Em transito"), entr = E.filter(e => e.status === "Entregue");
+  const pct = E.length ? Math.round((entr.length / E.length) * 100) : 0;
+  const emRota = M.filter(m => tran.some(e => e.motoristaId === m.id));
+  const serieTran = [...DEMO.emTransito.slice(0, 6), tran.length];
+  const C = 2 * Math.PI * 26;
+
+  /* glowRing: camada do Glowing Effect (21st.dev) dentro de cada card interativo */
+  const kpis = `
+    <button class="card kpi glow spot lift clickable c-3" data-go="entregas" data-f="todas" aria-label="Ver todas as entregas">
+      ${glowRing}
+      <div class="kpi-top"><div class="kpi-ico">${ico("pkg")}</div><span class="kpi-label">Cadastradas</span><span class="kpi-go">${ico("arrow", "ic-sm")}</span></div>
+      <div class="kpi-row"><div class="kpi-num num" data-count="${E.length}">${E.length}</div></div>
+      <div class="kpi-vis">${sparkline(DEMO.cadastradas, DIAS, "cadastradas")}</div>
+      <div class="kpi-foot"><b>${DEMO.cadastradas[6]}</b> cadastradas hoje</div>
+    </button>
+    <button class="card kpi glow spot lift clickable c-3" data-go="entregas" data-f="Em transito" aria-label="Ver entregas em trânsito">
+      ${glowRing}
+      <div class="kpi-top"><div class="kpi-ico">${ico("truck")}</div><span class="kpi-label">Em trânsito</span><span class="kpi-go">${ico("arrow", "ic-sm")}</span></div>
+      <div class="kpi-row"><div class="kpi-num num" data-count="${tran.length}">${tran.length}</div></div>
+      <div class="kpi-vis">${minibars(serieTran, DIAS, "em trânsito")}</div>
+      <div class="kpi-foot"><b>${pend.length}</b> aguardando despacho</div>
+    </button>
+    <button class="card kpi glow spot lift clickable c-3" data-go="entregas" data-f="Entregue" aria-label="Ver entregas concluídas">
+      ${glowRing}
+      <div class="kpi-top"><div class="kpi-ico">${ico("ccheck")}</div><span class="kpi-label">Concluídas</span><span class="kpi-go">${ico("arrow", "ic-sm")}</span></div>
+      <div class="kpi-row">
+        <div class="kpi-num num"><span data-count="${pct}">${pct}</span><small>%</small></div>
+        <svg class="ring" viewBox="0 0 64 64" aria-hidden="true"><circle class="track" cx="32" cy="32" r="26"/>
+          <circle class="val" cx="32" cy="32" r="26" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - pct / 100)}"/></svg>
+      </div>
+      <div class="kpi-vis">
+        <div class="sbar" role="img" aria-label="${pend.length} pendentes, ${tran.length} em trânsito, ${entr.length} entregues">
+          <i style="flex-grow:${pend.length};background:var(--amber)"></i><i style="flex-grow:${tran.length};background:var(--indigo)"></i><i style="flex-grow:${entr.length};background:var(--green)"></i>
+        </div>
+        <div class="sbar-key"><span><i style="background:var(--amber)"></i>${pend.length}</span><span><i style="background:var(--indigo)"></i>${tran.length}</span><span><i style="background:var(--green)"></i>${entr.length}</span></div>
+      </div>
+      <div class="kpi-foot"><b>${entr.length}</b> de ${plural(E.length, "entrega", "entregas")} já entregues</div>
+    </button>
+    <button class="card kpi glow spot lift clickable c-3" data-go="motoristas" aria-label="Ver motoristas">
+      ${glowRing}
+      <div class="kpi-top"><div class="kpi-ico">${ico("card")}</div><span class="kpi-label">Em rota</span><span class="kpi-go">${ico("arrow", "ic-sm")}</span></div>
+      <div class="kpi-row">
+        <div class="kpi-num num"><span data-count="${emRota.length}">${emRota.length}</span><small>/${M.length}</small></div>
+        <div class="stack">${emRota.map(m => avatar(m.nome, m.id, "av-sm")).join("")}</div>
+      </div>
+      <div class="kpi-vis"><div class="segbar" aria-hidden="true">${M.map((m, i) => `<i class="${i < emRota.length ? "on" : ""}"></i>`).join("")}</div></div>
+      <div class="kpi-foot"><b>${M.length - emRota.length}</b> ${M.length - emRota.length === 1 ? "motorista disponível" : "motoristas disponíveis"}</div>
+    </button>`;
+
+  const counts = [
+    { k: "Pendente", label: "Pendente", n: pend.length, color: "var(--amber)" },
+    { k: "Em transito", label: "Em trânsito", n: tran.length, color: "var(--indigo)" },
+    { k: "Entregue", label: "Entregue", n: entr.length, color: "var(--green)" },
+  ];
+
+  const tempos = ["há 4 min", "há 18 min", "há 42 min", "há 1 h", "há 2 h", "há 3 h", "há 5 h"];
+  const titulo = { "Pendente": "Aguardando despacho", "Em transito": "Saiu para entrega", "Entregue": "Entrega concluída" };
+  const feed = [...E].sort((x, y) => y.id - x.id).slice(0, 5).map((e, i) => `
+    <div class="feed-item">
+      <div class="feed-ico ${ST[e.status].cls}">${ico(e.status === "Pendente" ? "clock" : e.status === "Em transito" ? "truck" : "check")}</div>
+      <div class="feed-txt">
+        <b>${titulo[e.status]}</b>
+        <span>${code(e.id)} para ${esc(e.cliente ? e.cliente.nome : "cliente removido")}${e.motorista ? " com " + esc(e.motorista.nome) : ""}</span>
+      </div>
+      ${e.status === "Pendente"
+        ? `<button class="btn btn-primary btn-sm" data-despachar="${e.id}">Despachar</button>`
+        : `<span class="feed-time">${tempos[i]}</span>`}
+    </div>`).join("");
+
+  const fila = pend.map(e => `
+    <div class="ink-item">
+      <div class="ink-pin">${ico("pin")}</div>
+      <div class="t"><b>${codeHTML(e.id)}</b><span>${esc(e.endereco)}</span></div>
+      <button class="btn btn-white btn-sm" data-despachar="${e.id}">Despachar</button>
+    </div>`).join("");
+
+  return `
+    <div class="bento">
+      <div class="c-12 demo${DB.modo() === "demo" ? " off" : ""}" id="demoBanner">${ico("info", "ic-sm")}${DB.modo() === "api"
+        ? "Conectado à API: os totais vêm do banco. O histórico semanal dos gráficos ainda é ilustrativo (a API não guarda datas)."
+        : "Modo demonstração: a API não respondeu, então os dados são de exemplo e as alterações não são salvas."}</div>
+      ${kpis}
+      <section class="card fill c-8">
+        <div class="card-head">
+          <div><h2>Fluxo de entregas</h2><div class="sub">Últimos 7 dias</div></div>
+          <div class="end legend"><span><i style="background:var(--primary)"></i>Cadastradas</span><span><i style="background:var(--green)"></i>Entregues</span></div>
+        </div>
+        ${flowChart(DEMO.cadastradas, DEMO.entregues, DIAS)}
+      </section>
+      <section class="card c-4">
+        <div class="card-head"><div><h2>Status agora</h2><div class="sub">Toque em um status para filtrar</div></div></div>
+        ${donut(counts)}
+      </section>
+      <section class="card c-7">
+        <div class="card-head"><div><h2>Atividade recente</h2><div class="sub">Movimentações das entregas</div></div>
+          <div class="end"><button class="btn btn-soft btn-sm" data-go="entregas">Ver entregas</button></div></div>
+        <div class="feed">${feed || `<div class="empty">${ico("pkg")}<div>Nenhuma entrega cadastrada ainda.</div></div>`}</div>
+      </section>
+      <section class="card ink spot fill c-5">
+        ${pend.length ? '<span class="beam" aria-hidden="true"><i></i></span>' : ""}
+        <div class="card-head"><div><h2>Fila de despacho</h2><div class="sub">${pend.length ? plural(pend.length, "entrega aguardando motorista", "entregas aguardando motorista") : "Nada esperando motorista"}</div></div></div>
+        <div class="ink-list">${fila || `<div class="ink-empty">${ico("ccheck")}<div>Fila vazia. Todas as entregas já saíram.</div></div>`}</div>
+        <div class="ink-free">
+          <span class="muted">Equipe agora</span>
+          <div class="crew">${M.length ? M.map(m => {
+            const e = tran.find(x => x.motoristaId === m.id);
+            return `<div class="crew-row">${avatar(m.nome, m.id, "av-sm")}<b>${esc(m.nome)}</b>${e ? `<span class="st">em rota · ${codeHTML(e.id)}</span>` : '<span class="st livre">disponível</span>'}</div>`;
+          }).join("") : '<span class="muted">Nenhum motorista cadastrado.</span>'}</div>
+        </div>
+      </section>
+    </div>`;
+}
+
+/* ---------- ENTREGAS (master-detail, ref. Finnova) ---------- */
+function filtrarEntregas() {
+  const q = S.busca.toLowerCase();
+  return DB.listarEntregas()
+    .filter(e => S.fEnt === "todas" || e.status === S.fEnt)
+    .filter(e => !q || [code(e.id), e.endereco, e.cliente?.nome, e.motorista?.nome, ST[e.status].label].join(" ").toLowerCase().includes(q))
+    .sort((x, y) => y.id - x.id);
+}
+function viewEntregas() {
+  const todas = DB.listarEntregas();
+  const n = k => k === "todas" ? todas.length : todas.filter(e => e.status === k).length;
+  const lista = filtrarEntregas();
+  if (!lista.some(e => e.id === S.sel)) S.sel = lista[0]?.id ?? null;
+  const sel = lista.find(e => e.id === S.sel);
+
+  const filtros = [["todas", "Todas"], ["Pendente", "Pendente"], ["Em transito", "Em trânsito"], ["Entregue", "Entregue"]]
+    .map(([k, l]) => `<button class="${S.fEnt === k ? "on" : ""}" data-fent="${k}" aria-pressed="${S.fEnt === k}">${l}<span class="n num">${n(k)}</span></button>`).join("");
+
+  const itens = lista.map(e => `
+    <button class="ink-item ${e.id === S.sel ? "sel" : ""}" data-sel="${e.id}" aria-current="${e.id === S.sel}">
+      ${e.cliente ? avatar(e.cliente.nome, e.cliente.id) : `<div class="ink-pin">${ico("pin")}</div>`}
+      <div class="t"><b>${codeHTML(e.id)}</b><span>${esc(e.cliente ? e.cliente.nome : "Sem cliente")}</span></div>
+      ${chip(e.status)}
+    </button>`).join("");
+
+  return `
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Filtrar por status">${filtros}</div>
+        <div class="end"><button class="btn btn-primary" id="novaEntrega">${ico("plus")}Nova entrega</button></div>
+      </div>
+      <div class="md ${S.sheet ? "sheet-open" : ""}">
+        <div class="sheet-back" data-sheet-close="1" aria-hidden="true"></div>
+        <section class="card ink spot">
+          <div class="card-head"><div><h2>Entregas</h2><div class="sub">${plural(lista.length, "resultado", "resultados")}</div></div></div>
+          <div class="ink-list">${itens || `<div class="ink-empty">${ico("search")}<div>Nenhuma entrega com esse filtro.</div></div>`}</div>
+        </section>
+        ${detalheEntrega(sel)}
+      </div>
+    </div>`;
+}
+function detalheEntrega(e) {
+  if (!e) return `<section class="detail detail-empty" id="detail"><div>${ico("pkg")}<p style="margin-top:8px">Selecione uma entrega para ver os detalhes.</p></div></section>`;
+  const ordem = ["Pendente", "Em transito", "Entregue"], at = ordem.indexOf(e.status);
+  const steps = ordem.map((s, i) => `
+    ${i ? `<div class="step-line ${i <= at ? "done" : ""}"></div>` : ""}
+    <div class="step ${i < at || (i === at && s === "Entregue") ? "done" : i === at ? "now" : ""}">
+      <i>${i < at || (i === at && s === "Entregue") ? ico("check", "ic-sm") : i + 1}</i><span>${ST[s].label}</span>
+    </div>`).join("");
+
+  let acao = "";
+  if (e.status === "Pendente") {
+    const M = DB.listarMotoristas();
+    acao = M.length
+      ? `<span class="note">${ico("truck", "ic-sm")}Escolha quem vai levar</span>
+         <label class="sr" for="dMot">Motorista</label>
+         <select class="d-select" id="dMot"><option value="">Selecione o motorista</option>${M.map(m => `<option value="${m.id}">${esc(m.nome)}</option>`).join("")}</select>
+         <button class="btn btn-white" data-act="despachar">${ico("send", "ic-sm")}Despachar</button>
+         <div class="err" id="dErr" hidden></div>`
+      : `<span class="note">${ico("alert", "ic-sm")}Cadastre um motorista para despachar</span>
+         <button class="btn btn-white" data-go="motoristas">Ir para motoristas</button>`;
+  } else if (e.status === "Em transito") {
+    acao = `<span class="note">${ico("truck", "ic-sm")}A caminho com ${esc(e.motorista?.nome || "motorista")}</span>
+            <button class="btn btn-white" data-act="entregue">${ico("check", "ic-sm")}Confirmar entrega</button>`;
+  } else {
+    acao = `<span class="note">${ico("ccheck", "ic-sm")}Entrega concluída</span>`;
+  }
+
+  return `
+    <section class="detail" id="detail" aria-live="polite" aria-label="Detalhes da entrega ${code(e.id)}">
+      <span class="sheet-grip" aria-hidden="true"></span>
+      <div class="d-top">
+        <div><div class="d-id num" translate="no">${code(e.id)}</div><div class="d-sub">Entrega para ${esc(e.cliente?.nome || "cliente removido")}</div></div>
+        ${chip(e.status)}
+        <button class="sheet-close" data-sheet-close="1" aria-label="Fechar detalhes">${ico("x", "ic-sm")}</button>
+      </div>
+      <div class="d-tiles">
+        <div class="d-tile"><small>Cliente</small><b>${esc(e.cliente?.nome || "—")}</b></div>
+        <div class="d-tile"><small>Motorista</small><b>${esc(e.motorista?.nome || "Ainda não definido")}</b></div>
+        <div class="d-tile"><small>Endereço</small><b>${esc(e.endereco)}</b></div>
+      </div>
+      <div class="steps" aria-label="Andamento da entrega">${steps}</div>
+      <div class="d-foot">
+        ${acao}
+        <button class="d-del" data-act="excluir" aria-label="Excluir entrega ${code(e.id)}">${ico("trash", "ic-sm")}</button>
+      </div>
+    </section>`;
+}
+
+/* ---------- CLIENTES ---------- */
+function viewClientes() {
+  const E = DB.listarEntregas(), todos = DB.listarClientes(), q = S.busca.toLowerCase();
+  const n = k => k === "todos" ? todos.length : todos.filter(c => (k === "ativos") === c.ativo).length;
+  const lista = todos
+    .filter(c => S.fCli === "todos" || (S.fCli === "ativos") === c.ativo)
+    .filter(c => !q || c.nome.toLowerCase().includes(q));
+  const filtros = [["todos", "Todos"], ["ativos", "Ativos"], ["inativos", "Inativos"]]
+    .map(([k, l]) => `<button class="${S.fCli === k ? "on" : ""}" data-fcli="${k}" aria-pressed="${S.fCli === k}">${l}<span class="n num">${n(k)}</span></button>`).join("");
+
+  const linhas = lista.map(c => {
+    const qtd = E.filter(e => e.clienteId === c.id).length;
+    return `<tr>
+      <td><div class="who">${avatar(c.nome, c.id)}<div><b>${esc(c.nome)}</b><span>Cliente #${c.id}</span></div></div></td>
+      <td class="num">${c.idade} anos</td>
+      <td class="num">${plural(qtd, "entrega", "entregas")}</td>
+      <td>${c.ativo ? '<span class="chip on">Ativo</span>' : '<span class="chip off">Inativo</span>'}</td>
+      <td><div class="row-acts">
+        <button class="icon-act" data-edit-cli="${c.id}" aria-label="Editar ${esc(c.nome)}">${ico("edit", "ic-sm")}</button>
+        <button class="icon-act del" data-del-cli="${c.id}" aria-label="Excluir ${esc(c.nome)}">${ico("trash", "ic-sm")}</button>
+      </div></td>
+    </tr>`;
+  }).join("");
+
+  /* no celular a tabela vira cartões: cinco colunas não cabem em 390px */
+  const cartoes = lista.map(c => {
+    const qtd = E.filter(e => e.clienteId === c.id).length;
+    return `<div class="ccard">${avatar(c.nome, c.id)}
+      <div class="t"><b>${esc(c.nome)}</b>
+        <div class="meta">${c.ativo ? '<span class="chip on">Ativo</span>' : '<span class="chip off">Inativo</span>'}<span>${c.idade} anos · ${plural(qtd, "entrega", "entregas")}</span></div></div>
+      <div class="acts">
+        <button class="icon-act" data-edit-cli="${c.id}" aria-label="Editar ${esc(c.nome)}">${ico("edit", "ic-sm")}</button>
+        <button class="icon-act del" data-del-cli="${c.id}" aria-label="Excluir ${esc(c.nome)}">${ico("trash", "ic-sm")}</button>
+      </div></div>`;
+  }).join("");
+
+  return `
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Filtrar clientes">${filtros}</div>
+        <div class="end"><button class="btn btn-primary" id="novoCliente">${ico("plus")}Novo cliente</button></div>
+      </div>
+      <div class="mini-stats">
+        <div class="card mstat"><div class="kpi-ico">${ico("users")}</div><div><small>Clientes ativos</small><b class="num">${todos.filter(c => c.ativo).length}<span>/${todos.length}</span></b></div></div>
+        <div class="card mstat"><div class="kpi-ico">${ico("truck")}</div><div><small>Com entrega em andamento</small><b class="num">${new Set(E.filter(e => e.status !== "Entregue").map(e => e.clienteId)).size}</b></div></div>
+        <div class="card mstat"><div class="kpi-ico">${ico("pkg")}</div><div><small>Ainda sem entregas</small><b class="num">${todos.filter(c => !E.some(e => e.clienteId === c.id)).length}</b></div></div>
+      </div>
+      <section class="card list-card">
+        <div class="ccards">${cartoes || `<div class="empty">${ico("users")}<div>Nenhum cliente encontrado.</div></div>`}</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">Cliente</th><th scope="col">Idade</th><th scope="col">Entregas</th><th scope="col">Situação</th><th scope="col"><span class="sr">Ações</span></th></tr></thead>
+            <tbody>${linhas || `<tr><td colspan="5"><div class="empty">${ico("users")}<div>Nenhum cliente encontrado.</div></div></td></tr>`}</tbody>
+          </table>
+        </div>
+      </section>
+    </div>`;
+}
+
+/* ---------- MOTORISTAS (cards com spotlight) ---------- */
+function viewMotoristas() {
+  const E = DB.listarEntregas(), q = S.busca.toLowerCase();
+  const M = DB.listarMotoristas();
+  const lista = M.filter(m => !q || [m.nome, m.cnh, m.telefone].join(" ").toLowerCase().includes(q));
+  const cards = lista.map(m => {
+    const minhas = E.filter(e => e.motoristaId === m.id);
+    const rota = minhas.some(e => e.status === "Em transito");
+    return `<article class="card dcard glow spot lift">${glowRing}
+      <div class="dcard-top">
+        ${avatar(m.nome, m.id, "av-lg")}
+        <div class="t"><b>${esc(m.nome)}</b>${rota ? '<span class="chip tran">Em rota</span>' : '<span class="chip on">Disponível</span>'}</div>
+      </div>
+      <div class="dcard-meta">
+        <span>${ico("card")}CNH <span class="num" translate="no">${esc(m.cnh)}</span></span>
+        <span>${ico("phone")}${esc(m.telefone || "Sem telefone")}</span>
+      </div>
+      <div class="dstats">
+        <div class="dstat"><small>Em trânsito</small><b class="num">${minhas.filter(e => e.status === "Em transito").length}</b></div>
+        <div class="dstat"><small>Entregues</small><b class="num">${minhas.filter(e => e.status === "Entregue").length}</b></div>
+      </div>
+      <div class="dcard-acts">
+        <button class="icon-act" data-edit-mot="${m.id}" aria-label="Editar ${esc(m.nome)}">${ico("edit", "ic-sm")}</button>
+        <button class="icon-act del" data-del-mot="${m.id}" aria-label="Excluir ${esc(m.nome)}">${ico("trash", "ic-sm")}</button>
+      </div>
+    </article>`;
+  }).join("");
+  const emRota = M.filter(m => E.some(e => e.motoristaId === m.id && e.status === "Em transito")).length;
+  return `
+    <div class="mini-stats" style="margin-bottom:18px">
+      <div class="card mstat"><div class="kpi-ico">${ico("truck")}</div><div><small>Em rota agora</small><b class="num">${emRota}<span>/${M.length}</span></b></div></div>
+      <div class="card mstat"><div class="kpi-ico">${ico("ccheck")}</div><div><small>Disponíveis para despacho</small><b class="num">${M.length - emRota}</b></div></div>
+      <div class="card mstat"><div class="kpi-ico">${ico("pkg")}</div><div><small>Entregas concluídas</small><b class="num">${E.filter(e => e.status === "Entregue").length}</b></div></div>
+    </div>
+    <div class="dgrid">
+      ${cards}
+      <button class="add-tile" id="novoMotorista"><div><div class="plus">${ico("plus")}</div><div style="margin-top:10px">Cadastrar motorista</div></div></button>
+    </div>
+    ${!lista.length && S.busca ? `<div class="empty">${ico("search")}<div>Nenhum motorista encontrado para "${esc(S.busca)}".</div></div>` : ""}`;
+}
+
+/* =====================================================================
+   ROTEADOR E RENDER
+   ===================================================================== */
+const VIEWS = {
+  dashboard: { fn: viewDashboard, title: () => `${saudacao()}, Gustavo`, sub: () => new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" }) },
+  entregas: { fn: viewEntregas, title: () => "Entregas", sub: () => "Acompanhe, despache e conclua as entregas" },
+  clientes: { fn: viewClientes, title: () => "Clientes", sub: () => "Quem solicita as entregas" },
+  motoristas: { fn: viewMotoristas, title: () => "Motoristas", sub: () => "Quem leva as entregas até o destino" },
+};
+
+function render() {
+  const v = VIEWS[S.view];
+  $("#content").innerHTML = v.fn();
+  $("#pageTitle").textContent = v.title();
+  const sub = v.sub(); $("#pageSub").textContent = sub.charAt(0).toUpperCase() + sub.slice(1);
+  $$(".nav-item, .tabbar a").forEach(b => {
+    const on = b.dataset.view === S.view;
+    b.classList.toggle("active", on);
+    if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+  });
+  const pend = DB.listarEntregas().filter(e => e.status === "Pendente").length;
+  $("#badgePend").textContent = pend; $("#badgePend").hidden = !pend;
+  $("#badgeTab").textContent = pend; $("#badgeTab").hidden = !pend;
+  $("#bellDot").hidden = !pend;
+  $("#searchBox").hidden = S.view === "dashboard";
+
+  if (S.view === "dashboard") {
+    bindSparks(); bindBars(); bindFlow(DEMO.cadastradas, DEMO.entregues, DIAS);
+    const E = DB.listarEntregas(); bindDonut(E.length);
+  }
+  animateCounts();
+  posicionarAbas();
+  glowFrame();
+  S.animou = true;
+}
+
+function irPara(view, extra = {}) {
+  if (!VIEWS[view]) view = "dashboard";
+  Object.assign(S, { view, busca: "", sheet: false }, extra);
+  if (location.hash.slice(1) !== view) history.replaceState(null, "", "#" + view);
+  $("#search").value = "";
+  $("#app").classList.remove("nav-open");
+  render();
+  window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+}
+
+/* ---------- eventos globais (delegação) ---------- */
+document.addEventListener("click", async ev => {
+  const nav = ev.target.closest("a.nav-item, .tabbar a");
+  if (nav && !ev.metaKey && !ev.ctrlKey && !ev.shiftKey && ev.button === 0) { ev.preventDefault(); return irPara(nav.dataset.view); }
+  const t = ev.target.closest("button, [data-go], [data-sheet-close]"); if (!t) return;
+  const d = t.dataset;
+  if (d.go) return irPara(d.go, d.f ? { fEnt: d.f } : {});
+  if (d.fent) { S.fEnt = d.fent; return render(); }
+  if (d.fcli) { S.fCli = d.fcli; return render(); }
+  if (d.sel) {
+    S.sel = Number(d.sel); S.sheet = estreito(); render();
+    if (S.sheet) $(".sheet-close")?.focus({ preventScroll: true });
+    return;
+  }
+  if (d.sheetClose) { S.sheet = false; render(); return $(`[data-sel="${S.sel}"]`)?.focus(); }
+  if (d.despachar) return abrirDespacho(Number(d.despachar));
+  if (d.act === "despachar") {
+    const mid = Number($("#dMot").value);
+    if (!mid) { const er = $("#dErr"); er.textContent = "Escolha um motorista antes de despachar."; er.hidden = false; $("#dMot").focus(); return; }
+    const id = S.sel, nome = DB.acharMotorista(mid)?.nome;
+    const r = await ocupado(t, () => DB.atualizarStatusEntrega(id, "Em transito", mid));
+    r.erro ? toast(r.erro, true) : toast(`${code(id)} despachada com ${nome}.`); return render();
+  }
+  if (d.act === "entregue") {
+    const id = S.sel;
+    const r = await ocupado(t, () => DB.atualizarStatusEntrega(id, "Entregue", null));
+    r.erro ? toast(r.erro, true) : toast(`${code(id)} marcada como entregue.`); return render();
+  }
+  if (d.act === "excluir") { const id = S.sel; return confirmar(`Excluir ${code(id)}?`, "A entrega sai da lista e não pode ser recuperada.", "Excluir entrega", async () => {
+    const r = await DB.excluirEntrega(id);
+    if (r.erro) toast(r.erro, true); else { toast(`${code(id)} excluída.`); S.sel = null; S.sheet = false; }
+    render();
+  }); }
+  if (t.id === "novaEntrega") return formEntrega();
+  if (t.id === "novoCliente") return formCliente();
+  if (t.id === "novoMotorista") return formMotorista();
+  if (d.editCli) return formCliente(Number(d.editCli));
+  if (d.editMot) return formMotorista(Number(d.editMot));
+  if (d.delCli) {
+    const c = DB.acharCliente(Number(d.delCli));
+    return confirmar(`Excluir ${c.nome}?`, "O cadastro do cliente será removido.", "Excluir cliente", async () => {
+      const r = await DB.excluirCliente(c.id); r.erro ? toast(r.erro, true) : toast(`${c.nome} excluído.`); render();
+    });
+  }
+  if (d.delMot) {
+    const m = DB.acharMotorista(Number(d.delMot));
+    return confirmar(`Excluir ${m.nome}?`, "O cadastro do motorista será removido.", "Excluir motorista", async () => {
+      const r = await DB.excluirMotorista(m.id); r.erro ? toast(r.erro, true) : toast(`${m.nome} excluído.`); render();
+    });
+  }
+});
+
+/* spotlight: o brilho do card segue o cursor */
+document.addEventListener("pointermove", ev => {
+  const el = ev.target.closest && ev.target.closest(".spot"); if (!el) return;
+  const r = el.getBoundingClientRect();
+  el.style.setProperty("--mx", ev.clientX - r.left + "px");
+  el.style.setProperty("--my", ev.clientY - r.top + "px");
+}, { passive: true });
+
+/* ---------- Glowing Effect (porte do componente da Aceternity no 21st.dev) ----------
+   Mesma lógica do original: só acende quando o cursor está perto do card
+   (proximidade) e fora do miolo dele (zona inativa); o ângulo do arco
+   persegue o do cursor com suavização. O original usa a lib "motion" para
+   animar o ângulo; aqui um requestAnimationFrame faz esse papel. */
+const GLOW = { proximidade: 64, zonaInativa: 0.45, suavizacao: 0.16 };
+const glowAngulo = new WeakMap();
+let gx = -1e5, gy = -1e5, gRaf = 0;
+function glowFrame() {
+  gRaf = 0;
+  let continuar = false;
+  $$(".glow").forEach(el => {
+    const ring = el.querySelector(":scope > .glow-ring"); if (!ring) return;
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2, p = GLOW.proximidade;
+    const perto = gx > r.left - p && gx < r.right + p && gy > r.top - p && gy < r.bottom + p;
+    const noMiolo = Math.hypot(gx - cx, gy - cy) < 0.5 * Math.min(r.width, r.height) * GLOW.zonaInativa;
+    ring.style.setProperty("--active", perto && !noMiolo ? "1" : "0");
+    if (!perto) return;
+    const alvo = (Math.atan2(gy - cy, gx - cx) * 180) / Math.PI + 90;
+    const atual = glowAngulo.get(el) ?? alvo;
+    const diff = ((alvo - atual + 540) % 360) - 180;          // caminho mais curto no círculo
+    const novo = atual + diff * GLOW.suavizacao;
+    glowAngulo.set(el, novo);
+    ring.style.setProperty("--start", novo.toFixed(2));
+    if (Math.abs(diff) > 0.4) continuar = true;
+  });
+  if (continuar) gRaf = requestAnimationFrame(glowFrame);
+}
+const pedirGlow = () => { if (!gRaf) gRaf = requestAnimationFrame(glowFrame); };
+document.addEventListener("pointermove", ev => {
+  if (ev.pointerType !== "mouse") return;                     // no toque não há "cursor perto"
+  gx = ev.clientX; gy = ev.clientY; pedirGlow();
+}, { passive: true });
+document.addEventListener("pointerleave", () => { gx = gy = -1e5; pedirGlow(); });
+window.addEventListener("scroll", pedirGlow, { passive: true });
+
+/* ---------- abas com indicador deslizante ----------
+   Como cada clique redesenha a tela, o indicador nasce na posição da aba
+   anterior (guardada aqui) e no quadro seguinte desliza até a nova. */
+const abaAnterior = {};
+function posicionarAbas() {
+  $$(".toolbar .seg").forEach(seg => {
+    const on = seg.querySelector("button.on"); if (!on) return;
+    const chave = seg.getAttribute("aria-label");
+    const ind = document.createElement("span");
+    ind.className = "seg-ind"; ind.setAttribute("aria-hidden", "true");
+    const de = abaAnterior[chave], para = { x: on.offsetLeft, w: on.offsetWidth };
+    const aplicar = pos => { ind.style.width = pos.w + "px"; ind.style.transform = `translateX(${pos.x}px)`; };
+    ind.style.transition = "none"; aplicar(de || para);
+    seg.prepend(ind); seg.classList.add("ready");
+    void ind.offsetWidth;                                       // força o navegador a fixar a posição inicial
+    ind.style.transition = ""; aplicar(para);
+    abaAnterior[chave] = para;
+    if (on.scrollIntoView && seg.scrollWidth > seg.clientWidth) on.scrollIntoView({ block: "nearest", inline: "nearest" });
+  });
+}
+window.addEventListener("resize", () => { clearTimeout(window._rz); window._rz = setTimeout(posicionarAbas, 120); });
+
+/* ---------- trilho de ícones entre 641 e 1100px ----------
+   Nessa faixa a sidebar inteira (256px) come espaço demais; o trilho de
+   80px é o padrão "navigation rail" para telas médias. */
+const mqTrilho = matchMedia("(min-width: 641px) and (max-width: 1100px)");
+const aplicarTrilho = () => $("#app").classList.toggle("rail", mqTrilho.matches);
+mqTrilho.addEventListener?.("change", aplicarTrilho);
+
+/* Esc fecha a folha de detalhe quando não há modal aberto */
+document.addEventListener("keydown", ev => {
+  if (ev.key === "Escape" && S.sheet && !$("#modalHost").children.length) { S.sheet = false; render(); }
+});
+
+/* busca da tela atual */
+let tBusca;
+$("#search").addEventListener("input", e => { clearTimeout(tBusca); tBusca = setTimeout(() => { S.busca = e.target.value.trim(); render(); }, 120); });
+
+/* sidebar: recolher (desktop) e gaveta (mobile) */
+function setCollapsed(on) {
+  $("#app").classList.toggle("collapsed", on);
+  $("#collapseBtn").setAttribute("aria-expanded", String(!on));
+  $("#collapseBtn").setAttribute("aria-label", on ? "Expandir menu" : "Recolher menu");
+  $("#collapseBtn .collapse-label").textContent = on ? "Expandir menu" : "Recolher menu";
+  pref.set("collapsed", on ? "1" : "0");
+}
+$("#collapseBtn").addEventListener("click", () => setCollapsed(!$("#app").classList.contains("collapsed")));
+$("#menuBtn").addEventListener("click", () => $("#app").classList.add("nav-open"));
+$("#scrim").addEventListener("click", () => $("#app").classList.remove("nav-open"));
+$("#bellBtn").addEventListener("click", () => {
+  const n = DB.listarEntregas().filter(e => e.status === "Pendente").length;
+  n ? irPara("entregas", { fEnt: "Pendente" }) : toast("Nenhuma entrega aguardando despacho.");
+});
+
+/* tema claro/escuro (respeita o sistema até o usuário escolher) */
+function temaAtual() {
+  const t = document.documentElement.dataset.theme;
+  return t || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+}
+function pintarBotaoTema() {
+  const dark = temaAtual() === "dark";
+  $("#themeBtn").innerHTML = ico(dark ? "sun" : "moon");
+  $("#themeBtn").setAttribute("aria-label", dark ? "Usar tema claro" : "Usar tema escuro");
+}
+$("#themeBtn").addEventListener("click", () => {
+  const novo = temaAtual() === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = novo; pref.set("theme", novo); pintarBotaoTema();
+});
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", pintarBotaoTema);
+
+/* =====================================================================
+   MODAIS, FORMULÁRIOS E AVISOS
+   ===================================================================== */
+let focoAnterior = null;
+function abrirModal(titulo, corpo, rodape, onReady) {
+  focoAnterior = document.activeElement;
+  $("#modalHost").innerHTML = `
+    <div class="modal-back" id="mBack">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+        <div class="modal-head"><h2 id="mTitle">${titulo}</h2>
+          <button class="icon-act" id="mClose" aria-label="Fechar">${ico("x", "ic-sm")}</button></div>
+        <form id="mForm" novalidate>
+          <div class="modal-body">${corpo}</div>
+          <div class="modal-foot">${rodape}</div>
+        </form>
+      </div>
+    </div>`;
+  $("#mBack").addEventListener("pointerdown", e => { if (e.target.id === "mBack") fecharModal(); });
+  $("#mClose").addEventListener("click", fecharModal);
+  document.addEventListener("keydown", teclaModal);
+  (onReady && onReady()) || ($("#modalHost input, #modalHost select, #modalHost .modal-foot button") || {}).focus?.();
+}
+function fecharModal() {
+  $("#modalHost").innerHTML = "";
+  document.removeEventListener("keydown", teclaModal);
+  focoAnterior?.focus?.();
+}
+function teclaModal(e) {
+  if (e.key === "Escape") return fecharModal();
+  if (e.key === "Tab") {
+    const f = $$("#modalHost button, #modalHost input, #modalHost select").filter(x => !x.disabled);
+    if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+  }
+}
+function focarErro() { $(".field.bad input, .field.bad select")?.focus(); }
+function erroCampo(id, msg) {
+  const box = $("#" + id).closest(".field"); box.classList.toggle("bad", !!msg);
+  box.querySelector(".err").textContent = msg || "";
+}
+const campo = (id, label, attrs = "", hint = "") => `
+  <div class="field"><label for="${id}">${label}</label><input id="${id}" name="${id.slice(1).toLowerCase()}" ${attrs}>
+  ${hint ? `<span class="hint">${hint}</span>` : ""}<span class="err" role="alert"></span></div>`;
+
+function formCliente(id) {
+  const c = id ? DB.acharCliente(id) : null;
+  let ativo = c ? c.ativo : true;
+  abrirModal(c ? "Editar cliente" : "Novo cliente",
+    campo("fNome", "Nome", `value="${c ? esc(c.nome) : ""}" autocomplete="off" placeholder="Ex.: Maria Silva…"`) +
+    campo("fIdade", "Idade", `type="number" inputmode="numeric" min="1" autocomplete="off" value="${c ? c.idade : ""}" placeholder="Ex.: 35…"`) +
+    `<div class="field"><span class="sr" id="lblAtivo">Situação</span><label aria-hidden="true">Situação</label>
+      <div class="toggle" role="group" aria-labelledby="lblAtivo">
+        <button type="button" data-a="1" class="${ativo ? "on" : ""}" aria-pressed="${ativo}">Ativo</button>
+        <button type="button" data-a="0" class="${!ativo ? "on" : ""}" aria-pressed="${!ativo}">Inativo</button>
+      </div></div>`,
+    `<button type="button" class="btn btn-ghost" id="mCancel">Cancelar</button><button type="submit" class="btn btn-primary">${c ? "Salvar alterações" : "Cadastrar cliente"}</button>`);
+  $$(".toggle button").forEach(b => b.addEventListener("click", () => {
+    ativo = b.dataset.a === "1";
+    $$(".toggle button").forEach(x => { const on = x === b; x.classList.toggle("on", on); x.setAttribute("aria-pressed", on); });
+  }));
+  $("#mCancel").addEventListener("click", fecharModal);
+  $("#mForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const nome = $("#fNome").value.trim(), idade = Number($("#fIdade").value);
+    erroCampo("fNome", nome ? "" : "Informe o nome.");
+    erroCampo("fIdade", Number.isInteger(idade) && idade > 0 ? "" : "Informe uma idade maior que zero.");
+    if (!nome || !(Number.isInteger(idade) && idade > 0)) return focarErro();
+    // PUT /clientes/{id} recebe o cliente completo; POST /clientes cria um novo
+    const r = await ocupado(e.submitter, () => c ? DB.editarCliente(c.id, { nome, idade, ativo }) : DB.criarCliente({ nome, idade, ativo }));
+    if (r.erro) return toast(r.erro, true);           // mantém o modal aberto para corrigir
+    toast(c ? "Alterações salvas." : `${nome} cadastrado.`);
+    fecharModal(); render();
+  });
+}
+
+function formMotorista(id) {
+  const m = id ? DB.acharMotorista(id) : null;
+  abrirModal(m ? "Editar motorista" : "Novo motorista",
+    campo("fNome", "Nome", `value="${m ? esc(m.nome) : ""}" autocomplete="off" placeholder="Ex.: João Souza…"`) +
+    campo("fCnh", "CNH", `value="${m ? esc(m.cnh) : ""}" inputmode="numeric" maxlength="11" autocomplete="off" spellcheck="false" placeholder="Ex.: 12345678900…"`, "A CNH tem 11 dígitos.") +
+    campo("fTel", "Telefone", `type="tel" autocomplete="off" value="${m ? esc(m.telefone) : ""}" placeholder="Ex.: (19) 99999-0000…"`),
+    `<button type="button" class="btn btn-ghost" id="mCancel">Cancelar</button><button type="submit" class="btn btn-primary">${m ? "Salvar alterações" : "Cadastrar motorista"}</button>`);
+  $("#mCancel").addEventListener("click", fecharModal);
+  $("#mForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const nome = $("#fNome").value.trim(), cnh = $("#fCnh").value.replace(/\D/g, ""), telefone = $("#fTel").value.trim();
+    erroCampo("fNome", nome ? "" : "Informe o nome.");
+    erroCampo("fCnh", cnh.length === 11 ? "" : "A CNH precisa ter 11 dígitos. Digite só os números.");
+    if (!nome || cnh.length !== 11) return focarErro();
+    const r = await ocupado(e.submitter, () => m ? DB.editarMotorista(m.id, { nome, cnh, telefone }) : DB.criarMotorista({ nome, cnh, telefone }));
+    if (r.erro) return toast(r.erro, true);
+    toast(m ? "Alterações salvas." : `${nome} cadastrado.`);
+    fecharModal(); render();
+  });
+}
+
+function formEntrega() {
+  const C = DB.listarClientes().filter(c => c.ativo);
+  if (!C.length) return toast("Cadastre ou ative um cliente antes de criar uma entrega.", true);
+  abrirModal("Nova entrega",
+    `<div class="field"><label for="fCli">Cliente</label><select id="fCli">${C.map(c => `<option value="${c.id}">${esc(c.nome)}</option>`).join("")}</select></div>` +
+    campo("fEnd", "Endereço de entrega", `autocomplete="off" placeholder="Ex.: Rua das Flores, 123 - Centro, Limeira…"`) +
+    `<span class="field"><span class="hint">A entrega começa como Pendente. O motorista é escolhido no despacho.</span></span>`,
+    `<button type="button" class="btn btn-ghost" id="mCancel">Cancelar</button><button type="submit" class="btn btn-primary">Cadastrar entrega</button>`);
+  $("#mCancel").addEventListener("click", fecharModal);
+  $("#mForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const endereco = $("#fEnd").value.trim();
+    erroCampo("fEnd", endereco ? "" : "Informe o endereço com rua, número e cidade.");
+    if (!endereco) return focarErro();
+    const r = await ocupado(e.submitter, () => DB.criarEntrega({ endereco, clienteId: Number($("#fCli").value) }));
+    if (r.erro) return toast(r.erro, true);
+    const nova = r.dado;                              // a API devolve a entrega criada (201) com o Id
+    toast(`${code(nova.id)} cadastrada.`); fecharModal();
+    irPara("entregas", { fEnt: "todas", sel: nova.id });
+  });
+}
+
+function abrirDespacho(id) {
+  const M = DB.listarMotoristas(), e = DB.listarEntregas().find(x => x.id === id);
+  if (!M.length) return toast("Cadastre um motorista antes de despachar.", true);
+  abrirModal(`Despachar ${code(id)}`,
+    `<div class="field"><span class="hint">${esc(e.endereco)}</span></div>
+     <div class="field"><label for="fMot">Motorista</label><select id="fMot">${M.map(m => `<option value="${m.id}">${esc(m.nome)}</option>`).join("")}</select>
+     <span class="hint">A entrega passa para Em trânsito com este motorista.</span></div>`,
+    `<button type="button" class="btn btn-ghost" id="mCancel">Cancelar</button><button type="submit" class="btn btn-primary">${ico("send", "ic-sm")}Despachar</button>`);
+  $("#mCancel").addEventListener("click", fecharModal);
+  $("#mForm").addEventListener("submit", async ev => {
+    ev.preventDefault();
+    const mid = Number($("#fMot").value), nome = DB.acharMotorista(mid)?.nome;
+    const r = await ocupado(ev.submitter, () => DB.atualizarStatusEntrega(id, "Em transito", mid));
+    if (r.erro) return toast(r.erro, true);
+    toast(`${code(id)} despachada com ${nome}.`); fecharModal(); render();
+  });
+}
+
+function confirmar(titulo, texto, rotulo, ok) {
+  abrirModal(esc(titulo), `<p style="color:var(--fg-2)">${esc(texto)}</p>`,
+    `<button type="button" class="btn btn-ghost" id="mCancel">Cancelar</button><button type="submit" class="btn btn-danger">${rotulo}</button>`,
+    () => { $("#mCancel").focus(); return true; });
+  $("#mCancel").addEventListener("click", fecharModal);
+  $("#mForm").addEventListener("submit", e => { e.preventDefault(); fecharModal(); ok(); });
+}
+
+/* Trava o botão enquanto a API responde (evita clique duplo e cadastro repetido). */
+async function ocupado(btn, fn) {
+  if (btn) { btn.disabled = true; btn.setAttribute("aria-busy", "true"); }
+  try { return await fn(); }
+  finally { if (btn && btn.isConnected) { btn.disabled = false; btn.removeAttribute("aria-busy"); } }
+}
+
+function toast(msg, bad = false) {
+  const t = document.createElement("div");
+  t.className = "toast" + (bad ? " bad" : "");
+  t.innerHTML = ico(bad ? "alert" : "ccheck") + `<span>${esc(msg)}</span>`;
+  $("#toasts").appendChild(t);
+  setTimeout(() => { t.style.transition = "opacity .3s"; t.style.opacity = "0"; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+/* Cartão da sidebar: mostra se os dados vêm da API ou do modo demonstração. */
+function pintarModo(modo) {
+  const card = $("#modoCard"), api = modo === "api";
+  card.classList.toggle("api", api);
+  card.querySelector("b").textContent = api ? "Conectado à API" : "Modo demonstração";
+  card.querySelector("span").textContent = api
+    ? "Os dados vêm do banco SQLite. O histórico dos gráficos ainda é ilustrativo."
+    : "A API não respondeu. Dados de exemplo; nada é salvo.";
+  card.querySelector("code").textContent = API_BASE.replace(/^https?:\/\//, "");
+}
+
+/* ---------- início ---------- */
+(() => {
+  const tema = pref.get("theme"); if (tema === "dark" || tema === "light") document.documentElement.dataset.theme = tema;
+  if (pref.get("collapsed") === "1") setCollapsed(true);
+  pintarBotaoTema();
+  aplicarTrilho();
+  const inicial = location.hash.slice(1);
+  if (VIEWS[inicial]) S.view = inicial;
+  // Carrega os dados (API ou demonstração) antes de desenhar a tela.
+  DB.iniciar().then(modo => {
+    pintarModo(modo);
+    render();
+    if (modo === "demo") toast("API offline: exibindo dados de demonstração.", true);
+  });
+})();
+window.addEventListener("hashchange", () => { const v = location.hash.slice(1); if (VIEWS[v] && v !== S.view) irPara(v); });
+</script>
+
+</body></html>

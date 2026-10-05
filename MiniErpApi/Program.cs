@@ -14,10 +14,30 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// CORS: permite que o front seja aberto de outra origem (ex.: o arquivo
+// index.html aberto direto no navegador) e ainda assim consiga chamar a API.
+// Em desenvolvimento liberamos qualquer origem; em producao o ideal e
+// restringir ao endereco real do front.
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseCors();
+
+// Front-end: a API tambem entrega a interface (Rota ERP) que fica na pasta wwwroot.
+// UseDefaultFiles faz o endereco raiz (http://localhost:5185/) abrir o index.html;
+// UseStaticFiles serve os arquivos dessa pasta. Assim front e API rodam juntos.
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 //Endpoint Clientes
 app.MapGet("/clientes", () =>
@@ -65,6 +85,14 @@ app.MapDelete("/clientes/{id}", (int id) =>
     if (cliente == null)
     {
         return Results.NotFound();
+    }
+
+    // Protecao de integridade (mesma regra do console): nao permite excluir um
+    // cliente que ja tem entregas, para nao deixar entregas sem dono no banco.
+    bool temEntregas = db.Entregas.Any(e => e.ClienteId == cliente.Id);
+    if (temEntregas)
+    {
+        return Results.BadRequest("Este cliente possui entregas vinculadas e nao pode ser excluido.");
     }
 
     db.Clientes.Remove(cliente);
