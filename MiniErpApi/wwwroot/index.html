@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f3f4f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c0e1f" media="(prefers-color-scheme: dark)">
 <title>Rota ERP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -72,6 +74,8 @@
   --beam-a: #a99fff; --beam-b: #f6c24d;
   /* aba ativa (indicador deslizante) */
   --seg-on: #1a1c3a; --seg-on-fg: #eceefb;
+  /* séries do gráfico de fluxo (verde mais escuro que --green para passar contraste no claro) */
+  --ch-a: #5b4cf0; --ch-b: #17a06a;
   --scrim: rgba(16, 18, 40, .45);
   /* tipografia */
   --font: "Urbanist", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -93,6 +97,7 @@
     --green: #2fcf8d; --green-soft: #0e2e22; --green-ink: #5fe0a8;
     --ink-border: #2a2e57; --glow-a: #8c80ff; --glow-b: #c4b5fd; --glow-c: #2fcf8d;
     --seg-on: #3a3e8c; --seg-on-fg: #ffffff;
+    --ch-a: #7a6cff; --ch-b: #22ad75;
     --danger-soft: #3b1420; --danger-ink: #ff8798;
     --av0-bg: #26245a; --av0-fg: #b3aaff; --av1-bg: #3a2d0b; --av1-fg: #f6c24d;
     --av2-bg: #0f2f1c; --av2-fg: #5fe08b; --av3-bg: #3b1420; --av3-fg: #ff8798;
@@ -117,6 +122,7 @@
   --green: #2fcf8d; --green-soft: #0e2e22; --green-ink: #5fe0a8;
   --ink-border: #2a2e57; --glow-a: #8c80ff; --glow-b: #c4b5fd; --glow-c: #2fcf8d;
   --seg-on: #3a3e8c; --seg-on-fg: #ffffff;
+  --ch-a: #7a6cff; --ch-b: #22ad75;
   --danger-soft: #3b1420; --danger-ink: #ff8798;
   --av0-bg: #26245a; --av0-fg: #b3aaff; --av1-bg: #3a2d0b; --av1-fg: #f6c24d;
   --av2-bg: #0f2f1c; --av2-fg: #5fe08b; --av3-bg: #3b1420; --av3-fg: #ff8798;
@@ -275,8 +281,8 @@ svg { flex: none; }
 .av-4 { background: var(--av4-bg); color: var(--av4-fg); }
 .av-me { background: linear-gradient(140deg, var(--detail-a), var(--detail-b)); color: #fff; }
 .stack { display: flex; }
-.stack .av { box-shadow: 0 0 0 3px var(--surface); }
-.stack .av + .av { margin-left: -6px; }
+.stack .av { box-shadow: 0 0 0 2px var(--surface); }
+.stack .av + .av { margin-left: -3px; }
 
 /* ---------- botões ---------- */
 .btn {
@@ -398,6 +404,7 @@ svg { flex: none; }
   position: absolute; z-index: 5; transform: translate(-50%, calc(-100% - 10px)); opacity: 0; pointer-events: none;
   background: var(--ink); color: var(--ink-fg); border-radius: var(--r-sm); padding: 6px 10px; font-size: 12px; font-weight: 600;
   white-space: nowrap; box-shadow: var(--shadow-md); transition: opacity .15s, left .12s, top .12s;
+  border: 1px solid var(--ink-border);
 }
 .tip span { color: var(--ink-muted); font-weight: 500; margin-right: 6px; }
 
@@ -414,7 +421,6 @@ svg { flex: none; }
 .mbars.active .tip { opacity: 1; }
 @media (prefers-reduced-motion: no-preference) {
   .grow .mbar i { animation: grow .7s cubic-bezier(.2, .9, .3, 1.15) both; animation-delay: calc(var(--i) * 60ms); }
-  .grow .fbar { animation: grow .7s cubic-bezier(.2, .9, .3, 1.1) both; animation-delay: calc(var(--i) * 50ms); }
 }
 @keyframes grow { from { transform: scaleY(.04); } }
 
@@ -432,21 +438,48 @@ svg { flex: none; }
 .legend { display: flex; gap: 16px; font-size: 13px; color: var(--fg-2); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { width: 10px; height: 10px; border-radius: 3px; }
-.flow { position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; flex: 1; min-height: 220px; }
+.legend i.line { width: 14px; height: 3px; border-radius: 2px; }
 .fill { display: flex; flex-direction: column; }
+/* resumo da semana acima do gráfico: o número que importa vem antes do desenho */
+.flow-sum { display: flex; gap: 28px; flex-wrap: wrap; margin: -4px 0 24px; }
+.flow-sum small { display: block; font-size: 12px; color: var(--muted); font-weight: 600; }
+.flow-sum b { font-size: 22px; font-weight: 600; line-height: 1.2; }
+.flow-sum b span { font-size: 13px; color: var(--muted); font-weight: 500; margin-left: 4px; }
+/* área do gráfico: eixo Y à esquerda, plotagem flexível à direita */
+.flow { position: relative; display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; flex: 1; min-height: 200px; outline-offset: 6px; border-radius: var(--r-sm); }
 .flow-y { position: relative; }
 .flow-y span { position: absolute; right: 0; transform: translateY(50%); font-size: 12px; color: var(--muted); }
-.flow-plot { position: relative; display: flex; align-items: flex-end; gap: 10px; border-bottom: 1px solid var(--border); }
-.flow-grid { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--border); pointer-events: none; }
-.fgroup { position: relative; flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 5px; border-radius: 12px; padding-top: 6px; transition: background .2s; }
-.fgroup:hover { background: var(--surface-2); }
-.fbar { width: min(18px, 34%); border-radius: 7px 7px 3px 3px; transform-origin: bottom; }
-.fbar.a { background: var(--primary); }
-.fbar.b { background: var(--green); }
-.flow-x { display: flex; gap: 10px; margin-left: 40px; margin-top: 8px; }
-.flow-x span { flex: 1; text-align: center; font-size: 12px; color: var(--muted); }
-.flow .tip { opacity: 0; }
+.flow-plot { position: relative; touch-action: pan-y; cursor: crosshair; }
+.flow-plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.flow-grid { position: absolute; left: 0; right: 0; border-top: 1px solid var(--border); pointer-events: none; }
+.flow-grid.base { border-top-color: color-mix(in srgb, var(--fg) 18%, transparent); }
+.f-line { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.f-line.a { stroke: var(--ch-a); } .f-line.b { stroke: var(--ch-b); }
+/* pontos: HTML posicionado em %, assim continuam redondos em qualquer largura */
+.fdot { position: absolute; width: 10px; height: 10px; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 0 2px var(--surface); pointer-events: none; }
+.fdot.a { background: var(--ch-a); } .fdot.b { background: var(--ch-b); }
+.fdot.hov { opacity: 0; transition: opacity .15s; }
+.flow-guide { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--fg); opacity: 0; pointer-events: none; transition: opacity .15s; }
+.flow.active .flow-guide { opacity: .14; }
+.flow.active .fdot.hov { opacity: 1; }
+.flow.active .fdot.end { opacity: .35; }
+.flow .tip { opacity: 0; transform: translate(-50%, calc(-100% - 14px)); }
+.flow .tip.ini { transform: translate(-12px, calc(-100% - 14px)); }
+.flow .tip.fim { transform: translate(calc(-100% + 12px), calc(-100% - 14px)); }
 .flow.active .tip { opacity: 1; }
+.tip .row { display: flex; align-items: center; gap: 8px; color: var(--ink-fg); font-weight: 600; }
+.tip .row i { width: 10px; height: 3px; border-radius: 2px; }
+.tip .row em { font-style: normal; color: var(--ink-muted); font-weight: 500; margin-left: auto; padding-left: 14px; }
+.tip .day { display: block; color: var(--ink-muted); font-weight: 500; margin-bottom: 4px; }
+.flow-x { position: relative; height: 20px; margin-left: 36px; margin-top: 8px; }
+.flow-x span { position: absolute; transform: translateX(-50%); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.flow-x span.hoje { color: var(--fg); font-weight: 600; }
+/* entrada: as linhas "se desenham" da esquerda para a direita */
+@media (prefers-reduced-motion: no-preference) {
+  .flow.grow svg { animation: revela 1s cubic-bezier(.3, .8, .25, 1) both; }
+  .flow.grow .fdot.end { animation: fade .3s ease .85s both; }
+}
+@keyframes revela { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 
 /* ---------- donut de status ---------- */
 .donut-wrap { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
@@ -483,7 +516,6 @@ svg { flex: none; }
 .feed-txt { flex: 1; min-width: 0; }
 .feed-txt b { display: block; font-weight: 700; font-size: 14px; line-height: 1.35; }
 .feed-txt span { display: block; color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.feed-time { font-size: 12px; color: var(--muted); white-space: nowrap; }
 
 /* ---------- painel escuro (ref. Unpaid Invoices da Finnova) ---------- */
 .ink { background: var(--ink); color: var(--ink-fg); border-color: var(--ink-border); }
@@ -610,7 +642,14 @@ tr:hover .row-acts, .row-acts:focus-within { opacity: 1; }
 }
 
 .demo.off { background: var(--amber-soft); color: var(--amber-ink); }
-#content:empty::before { content: "Carregando dados…"; display: block; padding: 32px 8px; color: var(--fg-2); font-weight: 600; }
+/* esqueleto de carregamento: mostra a forma da tela enquanto a API responde */
+.skel { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.skel i { display: block; height: 168px; border-radius: var(--r-xl); background: var(--surface); border: 1px solid var(--border); position: relative; overflow: hidden; }
+.skel i.big { grid-column: span 3; height: 300px; } .skel i.mid { height: 300px; }
+.skel i::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--fg) 6%, transparent), transparent); animation: brilho 1.3s ease-in-out infinite; }
+@keyframes brilho { to { transform: translateX(100%); } }
+@media (max-width: 860px) { .skel { grid-template-columns: 1fr 1fr; } .skel i.big { grid-column: span 2; } .skel i.mid { display: none; } }
 
 /* ---------- modal ---------- */
 .modal-back { overscroll-behavior: contain; position: fixed; inset: 0; z-index: 80; background: var(--scrim); display: grid; place-items: center; padding: 16px; animation: fade .18s ease; }
@@ -760,7 +799,7 @@ tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--primary); }
 .ccard .t b { display: block; font-weight: 700; line-height: 1.3; overflow-wrap: break-word; }
 .ccard .t span { display: block; font-size: 12px; color: var(--muted); }
 .ccard .meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
-.ccard .meta .chip { height: 22px; padding: 0 9px; font-size: 11px; }
+.ccard .meta .chip { height: 24px; padding: 0 10px; font-size: 12px; }
 .ccard .acts { display: flex; gap: 2px; }
 
 /* ---------- barra de abas inferior (celular) ---------- */
@@ -856,8 +895,9 @@ tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--primary); }
   .mbars { gap: 5px; }
   .card-head { flex-wrap: wrap; }
   .card-head .end.legend { margin-left: 0; width: 100%; }
-  .flow { min-height: 180px; }
-  .flow-plot, .flow-x { gap: 4px; }
+  .flow { min-height: 170px; }
+  .flow-sum { gap: 18px; margin-bottom: 14px; }
+  .flow-sum b { font-size: 19px; }
   .feed-item { padding: 10px 4px; gap: 12px; }
   .feed-ico { width: 38px; height: 38px; border-radius: 12px; }
   .d-tiles { grid-template-columns: 1fr; }
@@ -886,7 +926,7 @@ tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--primary); }
   .mini-stats { gap: 8px; }
   .mstat { padding: 12px; gap: 6px; flex-direction: column; align-items: flex-start; }
   .mstat .kpi-ico { display: none; }
-  .mstat small { font-size: 11px; line-height: 1.3; }
+  .mstat small { font-size: 12px; line-height: 1.3; }
   .mstat b { font-size: 20px; }
   /* a lista de clientes deixa de ser card dentro de card */
   .list-card { background: transparent; border: 0; box-shadow: none; padding: 0; }
@@ -897,6 +937,13 @@ tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--primary); }
   .toast { max-width: none; }
   .modal-back { place-items: end center; padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px)); }
   .modal-foot .btn { flex: 1; }
+}
+@media (pointer: coarse) {
+  .icon-act, .icon-btn { width: 44px; height: 44px; }
+}
+@media (max-width: 640px) {
+  .feed-act { display: none; }
+  .feed-txt b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -929,7 +976,7 @@ tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--primary); }
     <a class="nav-item" href="#entregas" data-view="entregas" data-label="Entregas">
       <svg class="ic" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
       <span class="nav-label">Entregas</span>
-      <span class="nav-badge num" id="badgePend" title="Aguardando despacho">0</span>
+      <span class="nav-badge num" id="badgePend" title="Aguardando despacho" hidden>0</span>
     </a>
 
     <div class="nav-group">Cadastros</div>
@@ -973,7 +1020,7 @@ tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--primary); }
         <p id="pageSub"></p>
       </div>
       <div class="top-actions">
-        <label class="search" id="searchBox">
+        <label class="search" id="searchBox" hidden>
           <svg class="ic ic-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           <span class="sr">Buscar</span>
           <input id="search" type="search" name="busca" placeholder="Buscar nesta tela…" autocomplete="off">
@@ -981,18 +1028,20 @@ tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--primary); }
         <button class="icon-btn" id="themeBtn" aria-label="Alternar tema"></button>
         <button class="icon-btn" aria-label="Notificações" id="bellBtn">
           <svg class="ic" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-          <span class="dot" id="bellDot"></span>
+          <span class="dot" id="bellDot" hidden></span>
         </button>
       </div>
     </header>
 
-    <main id="content" tabindex="-1"></main>
+    <main id="content" tabindex="-1" aria-busy="true">
+      <div class="skel" aria-label="Carregando dados…"><i></i><i></i><i></i><i></i><i class="big"></i><i class="mid"></i></div>
+    </main>
   </div>
 
   <!-- barra de abas inferior: substitui a sidebar no celular -->
   <nav class="tabbar" aria-label="Navegação principal">
     <a href="#dashboard" data-view="dashboard"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>Painel</a>
-    <a href="#entregas" data-view="entregas"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>Entregas<span class="nav-badge num" id="badgeTab">0</span></a>
+    <a href="#entregas" data-view="entregas"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>Entregas<span class="nav-badge num" id="badgeTab" hidden>0</span></a>
     <a href="#clientes" data-view="clientes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</a>
     <a href="#motoristas" data-view="motoristas"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/></svg>Motoristas</a>
   </nav>
@@ -1364,39 +1413,105 @@ function animateCounts() {
   });
 }
 
-/* Gráfico de fluxo semanal: cadastradas x entregues, escala com marcas 0 / metade / topo */
+/* Gráfico de fluxo semanal: cadastradas x entregues em linhas com área suave.
+   Linha (e não barra) porque o assunto é a tendência ao longo dos dias.
+   Curva monotônica: suaviza sem "inventar" picos ou valores abaixo de zero. */
+function curvaMonotona(p) {
+  const n = p.length, m = [], t = [];
+  for (let i = 0; i < n - 1; i++) m.push((p[i + 1].y - p[i].y) / (p[i + 1].x - p[i].x));
+  t[0] = m[0]; t[n - 1] = m[n - 2];
+  for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (m[i] === 0) { t[i] = t[i + 1] = 0; continue; }
+    const a = t[i] / m[i], b = t[i + 1] / m[i], h = a * a + b * b;
+    if (h > 9) { const k = 3 / Math.sqrt(h); t[i] = k * a * m[i]; t[i + 1] = k * b * m[i]; }
+  }
+  let d = `M ${p[0].x} ${p[0].y}`;
+  for (let i = 0; i < n - 1; i++) {
+    const dx = (p[i + 1].x - p[i].x) / 3;
+    d += ` C ${(p[i].x + dx).toFixed(2)} ${(p[i].y + t[i] * dx).toFixed(2)}, ${(p[i + 1].x - dx).toFixed(2)} ${(p[i + 1].y - t[i + 1] * dx).toFixed(2)}, ${p[i + 1].x} ${p[i + 1].y.toFixed(2)}`;
+  }
+  return d;
+}
+/* posições em % (0-100) — usadas tanto pelo SVG quanto pelos pontos HTML */
+function geometriaFluxo(a, b) {
+  const topo = Math.max(4, Math.ceil(Math.max(...a, ...b) / 4) * 4), pad = 3;
+  const x = i => pad + (i / (a.length - 1)) * (100 - pad * 2);
+  const y = v => 100 - (v / topo) * 100;
+  return { topo, pa: a.map((v, i) => ({ x: x(i), y: y(v) })), pb: b.map((v, i) => ({ x: x(i), y: y(v) })) };
+}
 function flowChart(a, b, labels) {
-  const topo = Math.max(2, Math.ceil(Math.max(...a, ...b) / 2) * 2);
-  const ticks = [0, topo / 2, topo];
+  const g = geometriaFluxo(a, b), ticks = [0, g.topo / 2, g.topo];
+  const ta = a.reduce((s, v) => s + v, 0), tb = b.reduce((s, v) => s + v, 0);
+  const area = pts => `${curvaMonotona(pts)} L ${pts[pts.length - 1].x} 100 L ${pts[0].x} 100 Z`;
+  const ult = a.length - 1;
   return `
-    <div class="flow ${S.animou ? "" : "grow"}" role="img" aria-label="Entregas por dia nos últimos 7 dias">
-      <div class="flow-y">${ticks.map(t => `<span style="bottom:${(t / topo) * 100}%">${t}</span>`).join("")}</div>
-      <div class="flow-plot">
-        ${ticks.slice(1).map(t => `<div class="flow-grid" style="bottom:${(t / topo) * 100}%"></div>`).join("")}
-        ${a.map((v, i) => `
-          <div class="fgroup" data-i="${i}">
-            <div class="fbar a" style="height:${(v / topo) * 100}%;--i:${i}"></div>
-            <div class="fbar b" style="height:${(b[i] / topo) * 100}%;--i:${i}"></div>
-          </div>`).join("")}
+    <div class="flow-sum">
+      <div><small>Cadastradas</small><b class="num">${ta}<span>na semana</span></b></div>
+      <div><small>Entregues</small><b class="num">${tb}<span>na semana</span></b></div>
+      <div><small>Taxa de entrega</small><b class="num">${ta ? Math.round((tb / ta) * 100) : 0}%</b></div>
+    </div>
+    <div class="flow ${S.animou ? "" : "grow"}" id="flow" tabindex="0" role="group"
+         aria-label="Fluxo dos últimos 7 dias. Use as setas para ver cada dia.">
+      <div class="flow-y" aria-hidden="true">${ticks.map(t => `<span style="bottom:${(t / g.topo) * 100}%">${t}</span>`).join("")}</div>
+      <div class="flow-plot" aria-hidden="true">
+        ${ticks.map(t => `<div class="flow-grid ${t ? "" : "base"}" style="bottom:${(t / g.topo) * 100}%"></div>`).join("")}
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="fa" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" style="stop-color:var(--ch-a);stop-opacity:.16"/><stop offset="100%" style="stop-color:var(--ch-a);stop-opacity:0"/></linearGradient>
+            <linearGradient id="fb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" style="stop-color:var(--ch-b);stop-opacity:.14"/><stop offset="100%" style="stop-color:var(--ch-b);stop-opacity:0"/></linearGradient>
+          </defs>
+          <path d="${area(g.pa)}" fill="url(#fa)"/>
+          <path d="${area(g.pb)}" fill="url(#fb)"/>
+          <path class="f-line a" d="${curvaMonotona(g.pa)}" vector-effect="non-scaling-stroke"/>
+          <path class="f-line b" d="${curvaMonotona(g.pb)}" vector-effect="non-scaling-stroke"/>
+        </svg>
+        <span class="flow-guide"></span>
+        <span class="fdot a end" style="left:${g.pa[ult].x}%;top:${g.pa[ult].y}%"></span>
+        <span class="fdot b end" style="left:${g.pb[ult].x}%;top:${g.pb[ult].y}%"></span>
+        <span class="fdot a hov"></span><span class="fdot b hov"></span>
         <div class="tip"></div>
       </div>
     </div>
-    <div class="flow-x">${labels.map(l => `<span>${esc(l)}</span>`).join("")}</div>`;
+    <div class="flow-x" aria-hidden="true">${labels.map((l, i) => `<span class="${i === ult ? "hoje" : ""}" style="left:${g.pa[i].x}%">${esc(l)}</span>`).join("")}</div>
+    <div class="sr"><table><caption>Entregas por dia</caption><thead><tr><th>Dia</th><th>Cadastradas</th><th>Entregues</th></tr></thead>
+      <tbody>${labels.map((l, i) => `<tr><td>${esc(l)}</td><td>${a[i]}</td><td>${b[i]}</td></tr>`).join("")}</tbody></table></div>`;
 }
+/* hover (mouse/toque) e teclado: guia vertical + pontos + tooltip com os dois valores do dia */
 function bindFlow(a, b, labels) {
-  const flow = $(".flow"); if (!flow) return;
+  const flow = $("#flow"); if (!flow) return;
   const plot = flow.querySelector(".flow-plot"), tip = plot.querySelector(".tip");
-  plot.querySelectorAll(".fgroup").forEach(g => {
-    g.addEventListener("pointerenter", () => {
-      const i = Number(g.dataset.i), r = plot.getBoundingClientRect(), rg = g.getBoundingClientRect();
-      const topBar = Math.max(a[i], b[i]);
-      tip.style.left = (rg.left - r.left + rg.width / 2) + "px";
-      tip.style.top = (r.height - (topBar / Math.max(2, Math.ceil(Math.max(...a, ...b) / 2) * 2)) * r.height) + "px";
-      tip.innerHTML = `<span>${esc(labels[i])}</span>${plural(a[i], "cadastrada", "cadastradas")}, ${plural(b[i], "entregue", "entregues")}`;
-      flow.classList.add("active");
-    });
-  });
+  const guide = plot.querySelector(".flow-guide"), [da, db] = plot.querySelectorAll(".fdot.hov");
+  const g = geometriaFluxo(a, b);
+  let atual = a.length - 1;
+  const mostrar = i => {
+    atual = i;
+    const pa = g.pa[i], pb = g.pb[i];
+    guide.style.left = pa.x + "%";
+    da.style.left = pa.x + "%"; da.style.top = pa.y + "%";
+    db.style.left = pb.x + "%"; db.style.top = pb.y + "%";
+    tip.style.left = pa.x + "%"; tip.style.top = Math.min(pa.y, pb.y) + "%";
+    tip.classList.toggle("ini", i === 0); tip.classList.toggle("fim", i === a.length - 1);
+    tip.innerHTML = `<span class="day">${esc(labels[i])}</span>
+      <span class="row"><i style="background:var(--ch-a)"></i>Cadastradas<em>${a[i]}</em></span>
+      <span class="row"><i style="background:var(--ch-b)"></i>Entregues<em>${b[i]}</em></span>`;
+    flow.classList.add("active");
+  };
+  const indice = ev => {
+    const r = plot.getBoundingClientRect(), x = ((ev.clientX - r.left) / r.width) * 100;
+    let melhor = 0;
+    g.pa.forEach((p, i) => { if (Math.abs(p.x - x) < Math.abs(g.pa[melhor].x - x)) melhor = i; });
+    return melhor;
+  };
+  plot.addEventListener("pointermove", ev => mostrar(indice(ev)));
+  plot.addEventListener("pointerdown", ev => mostrar(indice(ev)));
   plot.addEventListener("pointerleave", () => flow.classList.remove("active"));
+  flow.addEventListener("focus", () => mostrar(atual));
+  flow.addEventListener("blur", () => flow.classList.remove("active"));
+  flow.addEventListener("keydown", ev => {
+    if (ev.key === "ArrowRight") { ev.preventDefault(); mostrar(Math.min(a.length - 1, atual + 1)); }
+    if (ev.key === "ArrowLeft") { ev.preventDefault(); mostrar(Math.max(0, atual - 1)); }
+  });
 }
 
 /* Donut de status com destaque no hover (arco + legenda sincronizados) */
@@ -1468,7 +1583,7 @@ function viewDashboard() {
       <div class="kpi-top"><div class="kpi-ico">${ico("pkg")}</div><span class="kpi-label">Cadastradas</span><span class="kpi-go">${ico("arrow", "ic-sm")}</span></div>
       <div class="kpi-row"><div class="kpi-num num" data-count="${E.length}">${E.length}</div></div>
       <div class="kpi-vis">${sparkline(DEMO.cadastradas, DIAS, "cadastradas")}</div>
-      <div class="kpi-foot"><b>${DEMO.cadastradas[6]}</b> cadastradas hoje</div>
+      <div class="kpi-foot"><b>${new Set(E.map(e => e.clienteId)).size}</b> ${new Set(E.map(e => e.clienteId)).size === 1 ? "cliente atendido" : "clientes atendidos"}</div>
     </button>
     <button class="card kpi glow spot lift clickable c-3" data-go="entregas" data-f="Em transito" aria-label="Ver entregas em trânsito">
       ${glowRing}
@@ -1510,7 +1625,6 @@ function viewDashboard() {
     { k: "Entregue", label: "Entregue", n: entr.length, color: "var(--green)" },
   ];
 
-  const tempos = ["há 4 min", "há 18 min", "há 42 min", "há 1 h", "há 2 h", "há 3 h", "há 5 h"];
   const titulo = { "Pendente": "Aguardando despacho", "Em transito": "Saiu para entrega", "Entregue": "Entrega concluída" };
   const feed = [...E].sort((x, y) => y.id - x.id).slice(0, 5).map((e, i) => `
     <div class="feed-item">
@@ -1520,8 +1634,8 @@ function viewDashboard() {
         <span>${code(e.id)} para ${esc(e.cliente ? e.cliente.nome : "cliente removido")}${e.motorista ? " com " + esc(e.motorista.nome) : ""}</span>
       </div>
       ${e.status === "Pendente"
-        ? `<button class="btn btn-primary btn-sm" data-despachar="${e.id}">Despachar</button>`
-        : `<span class="feed-time">${tempos[i]}</span>`}
+        ? `<button class="btn btn-primary btn-sm feed-act" data-despachar="${e.id}">Despachar</button>`
+        : ""}
     </div>`).join("");
 
   const fila = pend.map(e => `
@@ -1540,7 +1654,7 @@ function viewDashboard() {
       <section class="card fill c-8">
         <div class="card-head">
           <div><h2>Fluxo de entregas</h2><div class="sub">Últimos 7 dias</div></div>
-          <div class="end legend"><span><i style="background:var(--primary)"></i>Cadastradas</span><span><i style="background:var(--green)"></i>Entregues</span></div>
+          <div class="end legend"><span><i class="line" style="background:var(--ch-a)"></i>Cadastradas</span><span><i class="line" style="background:var(--ch-b)"></i>Entregues</span></div>
         </div>
         ${flowChart(DEMO.cadastradas, DEMO.entregues, DIAS)}
       </section>
@@ -1700,9 +1814,9 @@ function viewClientes() {
         <div class="end"><button class="btn btn-primary" id="novoCliente">${ico("plus")}Novo cliente</button></div>
       </div>
       <div class="mini-stats">
-        <div class="card mstat"><div class="kpi-ico">${ico("users")}</div><div><small>Clientes ativos</small><b class="num">${todos.filter(c => c.ativo).length}<span>/${todos.length}</span></b></div></div>
-        <div class="card mstat"><div class="kpi-ico">${ico("truck")}</div><div><small>Com entrega em andamento</small><b class="num">${new Set(E.filter(e => e.status !== "Entregue").map(e => e.clienteId)).size}</b></div></div>
-        <div class="card mstat"><div class="kpi-ico">${ico("pkg")}</div><div><small>Ainda sem entregas</small><b class="num">${todos.filter(c => !E.some(e => e.clienteId === c.id)).length}</b></div></div>
+        <div class="card mstat"><div class="kpi-ico">${ico("users")}</div><div><small>Ativos</small><b class="num">${todos.filter(c => c.ativo).length}<span>/${todos.length}</span></b></div></div>
+        <div class="card mstat"><div class="kpi-ico">${ico("truck")}</div><div><small>Em andamento</small><b class="num">${new Set(E.filter(e => e.status !== "Entregue").map(e => e.clienteId)).size}</b></div></div>
+        <div class="card mstat"><div class="kpi-ico">${ico("pkg")}</div><div><small>Sem entregas</small><b class="num">${todos.filter(c => !E.some(e => e.clienteId === c.id)).length}</b></div></div>
       </div>
       <section class="card list-card">
         <div class="ccards">${cartoes || `<div class="empty">${ico("users")}<div>Nenhum cliente encontrado.</div></div>`}</div>
@@ -2152,8 +2266,8 @@ function pintarModo(modo) {
   // Carrega os dados (API ou demonstração) antes de desenhar a tela.
   DB.iniciar().then(modo => {
     pintarModo(modo);
+    $("#content").removeAttribute("aria-busy");
     render();
-    if (modo === "demo") toast("API offline: exibindo dados de demonstração.", true);
   });
 })();
 window.addEventListener("hashchange", () => { const v = location.hash.slice(1); if (VIEWS[v] && v !== S.view) irPara(v); });
