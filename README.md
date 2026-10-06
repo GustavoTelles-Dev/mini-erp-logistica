@@ -7,7 +7,9 @@ Sistema de gestão logística (clientes, motoristas, entregas e notas fiscais) f
 > **Demonstração online:** **[mini-erp-logistica-production.up.railway.app](https://mini-erp-logistica-production.up.railway.app/)** · API: [/swagger](https://mini-erp-logistica-production.up.railway.app/swagger)
 > Cada visitante ganha uma cópia própria dos dados: pode criar, editar e excluir à vontade, e nada afeta outra pessoa.
 
-<!-- GIF da demonstração: docs/demo.gif -->
+![Demonstração do Rota ERP: despacho de uma entrega e cadastro de nota fiscal lida por IA](docs/demo.gif)
+
+<sub>Despacho de uma entrega e cadastro de uma nota fiscal: a IA lê a nota, o sistema confere CNPJ, chave de acesso e totais, e o usuário revisa antes de salvar.</sub>
 
 ---
 
@@ -160,6 +162,7 @@ mini ERP logistico/
 ├── MiniErpLogistica/        # V1: versão console (SQLite), onde a lógica nasceu
 ├── MiniErpApi.Tests/        # testes automatizados (xUnit)
 ├── .github/workflows/       # CI: compila, testa e monta a imagem Docker
+├── docs/                    # GIF de demonstração do README
 ├── Dockerfile               # imagem usada no Railway
 ├── railway.json             # build, verificação de saúde e reinício automático
 └── MiniErpApi/              # versão atual

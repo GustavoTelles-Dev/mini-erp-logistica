@@ -8,3 +8,4 @@ MiniErpLogistica/
 MiniErpApi.Tests/
 *.db
 *.md
+docs/
