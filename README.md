@@ -5,6 +5,7 @@
 Sistema de gestão logística (clientes, motoristas, entregas e notas fiscais) feito em **C# / .NET 8**, com banco **PostgreSQL (Supabase)**, **leitura de notas fiscais por IA (Google Gemini)** e uma interface web própria, o **Rota ERP**.
 
 > **Demonstração online:** **[mini-erp-logistica-production.up.railway.app](https://mini-erp-logistica-production.up.railway.app/)** · API: [/swagger](https://mini-erp-logistica-production.up.railway.app/swagger)
+>
 > Cada visitante ganha uma cópia própria dos dados: pode criar, editar e excluir à vontade, e nada afeta outra pessoa.
 
 ![Demonstração do Rota ERP: despacho de uma entrega e cadastro de nota fiscal lida por IA](docs/demo.gif)
