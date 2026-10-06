@@ -33,7 +33,7 @@ Content-Type: application/json
 {
   "nome": "",
   "idade": 0
-}'
+}
 
 ###
 PUT {{MiniErpApi_HostAddress}}/clientes/1
@@ -106,4 +106,36 @@ Content-Type: application/json
 
 ###
 DELETE {{MiniErpApi_HostAddress}}/entregas/1
+X-Sessao: {{sessao}}
+
+### Notas fiscais
+
+GET {{MiniErpApi_HostAddress}}/notas
+X-Sessao: {{sessao}}
+
+### Ler a nota com IA (nao salva nada; devolve os campos lidos + avisos da conferencia)
+POST {{MiniErpApi_HostAddress}}/notas/interpretar
+X-Sessao: {{sessao}}
+Content-Type: multipart/form-data; boundary=limite
+
+--limite
+Content-Disposition: form-data; name="arquivo"; filename="nota-exemplo.jpg"
+Content-Type: image/jpeg
+
+< ./wwwroot/exemplos/nota-exemplo.jpg
+--limite--
+
+### Salvar a nota conferida (dados em JSON no campo "dados"; arquivo opcional)
+POST {{MiniErpApi_HostAddress}}/notas
+X-Sessao: {{sessao}}
+Content-Type: multipart/form-data; boundary=limite
+
+--limite
+Content-Disposition: form-data; name="dados"
+
+{"entregaId":1,"numero":"4821","serie":"1","dataEmissao":"2026-10-03","emitenteCnpj":"11.222.333/0001-81","emitenteNome":"EMBALAGENS MODELO LTDA","valorTotal":345,"itens":[{"descricao":"CAIXA","quantidade":50,"valorUnitario":6.9,"valorTotal":345}],"lidaPorIa":false}
+--limite--
+
+###
+DELETE {{MiniErpApi_HostAddress}}/notas/1
 X-Sessao: {{sessao}}

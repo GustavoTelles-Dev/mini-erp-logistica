@@ -78,10 +78,13 @@ public class GerenciadorDeSessao
         await DadosDemo.Popular(_db, id);
     }
 
-    // Apaga os dados de uma sessao. Entregas primeiro, porque dependem de clientes e motoristas.
+    // Apaga os dados de uma sessao, de quem depende para quem e dependido:
+    // itens -> notas -> entregas -> clientes e motoristas.
     // IgnoreQueryFilters: aqui queremos enxergar a sessao informada, nao a da requisicao.
     public static async Task ApagarDados(AppDbContext db, Guid id, CancellationToken cancelar = default)
     {
+        await db.ItensNota.IgnoreQueryFilters().Where(i => i.SessaoId == id).ExecuteDeleteAsync(cancelar);
+        await db.NotasFiscais.IgnoreQueryFilters().Where(n => n.SessaoId == id).ExecuteDeleteAsync(cancelar);
         await db.Entregas.IgnoreQueryFilters().Where(e => e.SessaoId == id).ExecuteDeleteAsync(cancelar);
         await db.Clientes.IgnoreQueryFilters().Where(c => c.SessaoId == id).ExecuteDeleteAsync(cancelar);
         await db.Motoristas.IgnoreQueryFilters().Where(m => m.SessaoId == id).ExecuteDeleteAsync(cancelar);

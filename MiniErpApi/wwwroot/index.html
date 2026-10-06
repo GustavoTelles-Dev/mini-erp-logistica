@@ -945,6 +945,152 @@ tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--primary); }
   .modal-back { place-items: end center; padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px)); }
   .modal-foot .btn { flex: 1; }
 }
+/* =====================================================================
+   NOTAS FISCAIS
+   ===================================================================== */
+.ic-xs { width: 13px; height: 13px; }
+.v-curto { display: none; }
+@media (max-width: 640px) { .v-full { display: none; } .v-curto { display: inline; } }
+.nf-ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; background: var(--primary-soft); color: var(--primary); }
+.cel-b { display: block; font-weight: 700; line-height: 1.3; }
+.cel-s { display: block; font-size: 12px; color: var(--muted); }
+.link-ent { border: 0; background: none; padding: 0; font-weight: 700; color: var(--primary); }
+.link-ent:hover { text-decoration: underline; }
+.chip.ia { background: var(--primary-soft); color: var(--indigo-ink); gap: 5px; }
+.chip.ia::before { display: none; }
+
+/* estado vazio com chamada para a nota de exemplo */
+.nf-vazio { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; padding: 36px 16px; }
+.nf-vazio h2 { font-size: 20px; font-weight: 700; }
+.nf-vazio p { color: var(--fg-2); max-width: 520px; text-wrap: pretty; }
+.nf-vazio-ico { width: 64px; height: 64px; border-radius: 20px; display: grid; place-items: center; color: #fff;
+  background: linear-gradient(140deg, var(--detail-a), var(--detail-b)); box-shadow: var(--shadow-primary); }
+.nf-vazio-ico .ic { width: 28px; height: 28px; }
+.nf-vazio-acts { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+
+/* modal largo (enviar, ler e revisar a nota) */
+.modal.wide { max-width: 1080px; }
+.nf-rodape { display: contents; }
+.nf { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 22px; align-items: start; }
+.nf-prev-wrap { position: sticky; top: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.nf-prev-wrap > summary { display: none; }
+.nf-prev { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: auto; max-height: min(68vh, 640px); }
+.nf-prev img { display: block; width: 100%; height: auto; }
+.nf-prev object { display: block; width: 100%; height: min(68vh, 640px); }
+.nf-prev.vazio { display: grid; place-items: center; gap: 8px; min-height: 220px; color: var(--muted); text-align: center; padding: 20px; border-style: dashed; }
+.nf-prev.vazio .ic { width: 28px; height: 28px; }
+.nf-abrir { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--primary); }
+
+.drop { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 34px 20px; cursor: pointer;
+  border: 2px dashed var(--border); border-radius: var(--r-lg); background: var(--surface-2); color: var(--fg-2);
+  transition: border-color .2s, background .2s; }
+.drop:hover, .drop.over, .drop:focus-within { border-color: var(--primary); background: var(--primary-soft); }
+.drop b { color: var(--fg); font-size: 15px; }
+.drop span { font-size: 13px; }
+.drop .err { color: var(--danger-ink); font-weight: 600; }
+.drop-ico { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); box-shadow: var(--shadow-sm); color: var(--primary); margin-bottom: 4px; }
+.nf-ou { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.nf-ou::before, .nf-ou::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.nf-exemplo { width: 100%; }
+.nf-priv { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: var(--muted); }
+.nf-priv .ic { flex: none; margin-top: 2px; }
+
+/* lendo: pulso + etapas + esqueleto dos campos */
+.nf-lendo { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 8px 4px; }
+.nf-lendo > b { font-size: 18px; }
+.nf-lendo > span { color: var(--fg-2); }
+.nf-pulse { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; color: #fff;
+  background: linear-gradient(140deg, var(--detail-a), var(--detail-b)); box-shadow: var(--shadow-primary); }
+.nf-pulse.erro { background: var(--danger); box-shadow: none; }
+@media (prefers-reduced-motion: no-preference) { .nf-pulse:not(.erro) { animation: pulso 1.6s ease-in-out infinite; } }
+@keyframes pulso { 50% { transform: scale(1.08); box-shadow: 0 0 0 10px var(--primary-soft); } }
+.nf-etapas { list-style: none; margin: 6px 0 4px; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: var(--muted); }
+.nf-etapas li { display: flex; align-items: center; gap: 10px; }
+.nf-etapas li i { width: 13px; height: 13px; border-radius: 50%; border: 2px solid currentColor; flex: none; }
+.nf-etapas li.ok { color: var(--green-ink); }
+.nf-etapas li.ativo { color: var(--fg); font-weight: 600; }
+.nf-etapas li.ativo i { border-color: var(--primary); border-right-color: transparent; }
+@media (prefers-reduced-motion: no-preference) { .nf-etapas li.ativo i { animation: gira .8s linear infinite; } }
+@keyframes gira { to { transform: rotate(360deg); } }
+.nf-skel { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.nf-skel i { display: block; height: 42px; border-radius: var(--r-md); background: var(--surface-2); position: relative; overflow: hidden; }
+.nf-skel i.curto { width: 60%; }
+.nf-skel i::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--primary) 10%, transparent), transparent); animation: brilho 1.3s ease-in-out infinite; }
+
+/* revisão */
+.nf-form { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.nf-intro { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--fg-2); }
+.nf-intro .ic { color: var(--primary); flex: none; margin-top: 2px; }
+.nf-conf { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--r-md); font-size: 13px; }
+.nf-conf .ic { flex: none; margin-top: 1px; }
+.nf-conf ul { margin: 4px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 2px; }
+.nf-conf.ok { background: var(--green-soft); color: var(--green-ink); }
+.nf-conf.alerta { background: var(--amber-soft); color: var(--amber-ink); }
+.nf-conf.bloq { background: var(--danger-soft); color: var(--danger-ink); }
+.nf-conf.bloq li:not(.b) { color: var(--amber-ink); }
+.nf-grupo { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.nf-grupo legend { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 0; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.g3 { display: grid; grid-template-columns: 1.2fr .6fr 1fr; gap: 10px; }
+.g2 > *, .g3 > * { min-width: 0; }
+.nf-form .field input, .nf-form .field select { height: 42px; }
+.ia-tag { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 1px 8px; border-radius: var(--pill);
+  font-size: 11px; font-weight: 700; letter-spacing: .02em; text-transform: none; background: var(--primary-soft); color: var(--indigo-ink); vertical-align: middle; }
+.ia-tag.ed { background: var(--surface-3); color: var(--muted); }
+.field.incerto input, .field.aviso input { border-color: var(--amber); background: var(--amber-soft); }
+.nf-form .field.bad input { background: var(--danger-soft); }
+.field.aviso .err { color: var(--amber-ink); }
+.hint.warn { color: var(--amber-ink); font-weight: 600; }
+.nf-item { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, .8fr) minmax(0, 1fr) minmax(0, 1fr) 36px; gap: 6px; align-items: center; margin-bottom: 6px; }
+.nf-item input { width: 100%; height: 38px; padding: 0 10px; border-radius: var(--r-sm); border: 1px solid var(--border); background: var(--surface-2); color: var(--fg); outline: none; }
+.nf-item input:focus { border-color: var(--primary); background: var(--surface); box-shadow: 0 0 0 3px var(--primary-soft); }
+.nf-item input.num { text-align: right; }
+.nf-item.cab { margin-bottom: 2px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.nf-item.cab span:nth-child(n+2):nth-child(-n+4) { text-align: right; padding-right: 10px; }
+#nfItensErr { font-size: 12px; color: var(--danger-ink); }
+.nf-total .field input { font-size: 16px; font-weight: 700; }
+.nf-soma { font-size: 13px; color: var(--muted); margin-top: -6px; }
+.nf-soma b { color: var(--fg); }
+
+/* ver nota salva */
+.nf-dl { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px; margin: 0; }
+.nf-dl div:first-child { grid-column: span 2; }
+.nf-dl dt { font-size: 12px; color: var(--muted); font-weight: 600; }
+.nf-dl dd { margin: 2px 0 0; font-weight: 600; overflow-wrap: anywhere; }
+.nf-dl dd small { display: block; font-weight: 500; color: var(--muted); }
+.nf-tab { min-width: 0; border-spacing: 0; font-size: 13px; }
+.nf-tab th, .nf-tab td { padding: 8px 6px; border-bottom: 1px solid var(--border); background: none !important; border-radius: 0 !important; }
+.nf-tab .n { text-align: right; white-space: nowrap; }
+.nf-tab tfoot td { border-bottom: 0; font-weight: 600; }
+.nf-origem { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+
+/* notas no detalhe da entrega */
+.d-notas { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 18px; padding: 12px 14px; border-radius: var(--r-lg);
+  background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .16); }
+.d-notas-t { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; margin-right: 4px; }
+.d-notas-v { font-size: 13px; color: rgba(255, 255, 255, .75); }
+.d-notas .btn { margin-left: auto; }
+.d-nota { height: 30px; padding: 0 12px; border-radius: var(--pill); border: 1px solid rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .14);
+  color: #fff; font-size: 12.5px; font-weight: 700; transition: background .2s; }
+.d-nota:hover { background: rgba(255, 255, 255, .26); }
+
+@media (max-width: 860px) {
+  .nf { grid-template-columns: 1fr; }
+  .nf-prev-wrap { position: static; }
+  .nf-prev-wrap > summary { display: list-item; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--primary); }
+  .nf-prev, .nf-prev object { max-height: 300px; height: auto; }
+}
+@media (max-width: 640px) {
+  .g2, .g3, .nf-dl { grid-template-columns: 1fr; }
+  .nf-dl div:first-child { grid-column: auto; }
+  .nf-item { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 36px; padding: 10px; border-radius: var(--r-md); background: var(--surface-2); }
+  .nf-item input { background: var(--surface); }
+  .nf-item input[data-item="descricao"] { grid-column: 1 / -1; }
+  .nf-item.cab { display: grid; padding: 0 10px; background: none; margin-bottom: 0; }
+  .nf-item.cab span:first-child { display: none; }
+  .modal.wide .modal-body { padding: 12px 14px; }
+}
 @media (pointer: coarse) {
   .icon-act, .icon-btn { width: 44px; height: 44px; }
 }
@@ -984,6 +1130,10 @@ tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--primary); }
       <svg class="ic" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
       <span class="nav-label">Entregas</span>
       <span class="nav-badge num" id="badgePend" title="Aguardando despacho" hidden>0</span>
+    </a>
+    <a class="nav-item" href="#notas" data-view="notas" data-label="Notas fiscais">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>
+      <span class="nav-label">Notas fiscais</span>
     </a>
 
     <div class="nav-group">Cadastros</div>
@@ -1050,6 +1200,7 @@ tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--primary); }
   <nav class="tabbar" aria-label="Navegação principal">
     <a href="#dashboard" data-view="dashboard"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>Painel</a>
     <a href="#entregas" data-view="entregas"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>Entregas<span class="nav-badge num" id="badgeTab" hidden>0</span></a>
+    <a href="#notas" data-view="notas"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>Notas</a>
     <a href="#clientes" data-view="clientes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</a>
     <a href="#motoristas" data-view="motoristas"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/></svg>Motoristas</a>
   </nav>
@@ -1090,7 +1241,7 @@ class ErroApi extends Error {
 
 const DB = (() => {
   let modo = "api";                                   // "api" | "demo"
-  let cache = { clientes: [], motoristas: [], entregas: [] };
+  let cache = { clientes: [], motoristas: [], entregas: [], notas: [] };
   let sessaoId = null;
 
   // Id da sessão guardado só nesta aba (sessionStorage). Sem acesso? Segue sem guardar.
@@ -1103,12 +1254,13 @@ const DB = (() => {
   /* ---------- chamada real à API ---------- */
   async function http(metodo, rota, corpo) {
     const headers = {};
-    if (corpo) headers["Content-Type"] = "application/json";
+    const ehForm = corpo instanceof FormData;           // upload de arquivo: o navegador monta o multipart
+    if (corpo && !ehForm) headers["Content-Type"] = "application/json";
     if (sessaoId) headers["X-Sessao"] = sessaoId;
 
     let r;
     try {
-      r = await fetch(API_BASE + rota, { method: metodo, headers, body: corpo ? JSON.stringify(corpo) : undefined });
+      r = await fetch(API_BASE + rota, { method: metodo, headers, body: corpo ? (ehForm ? corpo : JSON.stringify(corpo)) : undefined });
     } catch {
       throw new ErroApi(0, "Não foi possível falar com a API. Confira se ela está rodando (dotnet run).");
     }
@@ -1178,7 +1330,7 @@ const DB = (() => {
         entregueEm: status === "Entregue" ? iso(criada + 9 * H) : null,
       };
     });
-    return { clientes, motoristas, entregas };
+    return { clientes, motoristas, entregas, notas: [], arquivos: {} };
   }
 
   const nextId = arr => arr.reduce((m, x) => Math.max(m, x.id), 0) + 1;
@@ -1200,6 +1352,7 @@ const DB = (() => {
   async function demo(metodo, rota, corpo) {
     const [, recurso, idTxt] = rota.split("/");
     if (recurso === "sessao") { base = semear(); return null; }      // POST /sessao/reiniciar
+    if (recurso === "notas") return demoNotas(metodo, idTxt, rota.split("/")[3], corpo);
     const tab = base[recurso], id = Number(idTxt);
     const item = idTxt ? tab.find(x => x.id === id) : null;
     const nomes = { clientes: "Cliente não encontrado.", motoristas: "Motorista não encontrado.", entregas: "Entrega não encontrada." };
@@ -1250,10 +1403,54 @@ const DB = (() => {
     if (metodo === "DELETE") {
       // proteção de integridade, igual à API
       if (recurso === "clientes" && base.entregas.some(e => e.clienteId === id)) recusar("Este cliente tem entregas vinculadas e não pode ser excluído. Exclua as entregas dele primeiro.");
+      if (recurso === "entregas" && base.notas.some(n => n.entregaId === id)) recusar("Esta entrega tem nota fiscal vinculada e não pode ser excluída. Exclua a nota primeiro.");
       if (recurso === "motoristas" && base.entregas.some(e => e.motoristaId === id)) recusar("Este motorista tem entregas vinculadas e não pode ser excluído. Exclua as entregas dele primeiro.");
       base[recurso] = tab.filter(x => x.id !== id);
       return null;
     }
+  }
+
+  // Notas no modo demonstração: sem IA de verdade, a leitura só funciona com a nota de exemplo
+  // (os valores dela são conhecidos). Para outros arquivos, o usuário preenche à mão.
+  async function demoNotas(metodo, idTxt, sub, corpo) {
+    const id = Number(idTxt);
+    if (metodo === "GET" && !idTxt) {
+      return base.notas.map(n => {
+        const e = base.entregas.find(x => x.id === n.entregaId);
+        const c = e && base.clientes.find(x => x.id === e.clienteId);
+        return { ...n, itens: undefined, clienteNome: c ? c.nome : null, quantidadeItens: n.itens.length, temArquivo: !!base.arquivos[n.id] };
+      }).sort((a, b) => b.criadaEm.localeCompare(a.criadaEm));
+    }
+    const nota = idTxt && idTxt !== "interpretar" ? base.notas.find(n => n.id === id) : null;
+    if (idTxt && idTxt !== "interpretar" && !nota) throw new ErroApi(404, "Nota fiscal não encontrada.");
+    if (metodo === "GET" && sub === "arquivo") { if (!base.arquivos[id]) throw new ErroApi(404, "Arquivo não encontrado."); return base.arquivos[id]; }
+    if (metodo === "GET") return structuredClone(nota);
+    if (metodo === "POST" && idTxt === "interpretar") {
+      const arq = corpo.get("arquivo");
+      await new Promise(r => setTimeout(r, 1800));                  // simula o tempo de leitura
+      if (!arq || arq.name !== NOTA_EXEMPLO.arquivo) {
+        throw new ErroApi(503, "No modo demonstração a leitura por IA só funciona com a nota de exemplo. Preencha os campos à mão ou use a nota de exemplo.");
+      }
+      const dados = structuredClone(NOTA_EXEMPLO.dados);
+      return { dados, avisos: conferirNota(dados) };
+    }
+    if (metodo === "POST") {
+      const d = JSON.parse(corpo.get("dados"));
+      const bloq = conferirNota(d).filter(a => a.bloqueia);
+      const campos = {};
+      if (!String(d.numero || "").trim()) campos.numero = "Informe o número da nota.";
+      if (!String(d.emitenteNome || "").trim()) campos.emitenteNome = "Informe o nome do emitente.";
+      if (!(d.valorTotal > 0)) campos.valorTotal = "Informe o valor total da nota.";
+      bloq.forEach(a => { campos[a.campo] ??= a.mensagem; });
+      if (Object.keys(campos).length) invalido(campos);
+      if (!base.entregas.some(e => e.id === d.entregaId)) recusar("Entrega não encontrada.");
+      const nova = { ...d, id: nextId(base.notas), criadaEm: new Date().toISOString() };
+      base.notas.push(nova);
+      const arq = corpo.get("arquivo");
+      if (arq) base.arquivos[nova.id] = arq;
+      return nova;
+    }
+    if (metodo === "DELETE") { base.notas = base.notas.filter(n => n.id !== id); delete base.arquivos[id]; return null; }
   }
 
   // Escolhe o "servidor" de acordo com o modo atual.
@@ -1261,10 +1458,10 @@ const DB = (() => {
 
   // Busca as três listas de uma vez e atualiza o cache.
   async function carregar() {
-    const [clientes, motoristas, entregas] = await Promise.all([
-      chamar("GET", "/clientes"), chamar("GET", "/motoristas"), chamar("GET", "/entregas"),
+    const [clientes, motoristas, entregas, notas] = await Promise.all([
+      chamar("GET", "/clientes"), chamar("GET", "/motoristas"), chamar("GET", "/entregas"), chamar("GET", "/notas"),
     ]);
-    cache = { clientes, motoristas, entregas };
+    cache = { clientes, motoristas, entregas, notas };
   }
 
   // Executa uma alteração e recarrega o cache. Nunca lança erro: devolve { erro, campos }.
@@ -1314,8 +1511,102 @@ const DB = (() => {
     criarEntrega: d => executar("POST", "/entregas", d),
     atualizarStatusEntrega: (id, status, motoristaId) => executar("PUT", `/entregas/${id}`, { status, motoristaId }),
     excluirEntrega: id => executar("DELETE", `/entregas/${id}`),
+
+    // ----- Notas fiscais -----
+    listarNotas: () => cache.notas,
+    // Leitura por IA: não salva nada, só devolve os campos lidos + avisos da conferência
+    async lerNota(arquivo) {
+      const fd = new FormData(); fd.append("arquivo", arquivo, arquivo.name);
+      try { return { ok: true, dado: await chamar("POST", "/notas/interpretar", fd) }; }
+      catch (e) { return { erro: e.message, status: e.status }; }
+    },
+    salvarNota(dados, arquivo) {
+      const fd = new FormData(); fd.append("dados", JSON.stringify(dados));
+      if (arquivo) fd.append("arquivo", arquivo, arquivo.name);
+      return executar("POST", "/notas", fd);
+    },
+    buscarNota: async id => { try { return { ok: true, dado: await chamar("GET", `/notas/${id}`) }; } catch (e) { return { erro: e.message }; } },
+    // Arquivo da nota como Blob (o <img> não envia o header de sessão, então baixamos via fetch)
+    async arquivoNota(id) {
+      if (modo === "demo") return await demo("GET", `/notas/${id}/arquivo`);
+      const r = await fetch(`${API_BASE}/notas/${id}/arquivo`, { headers: sessaoId ? { "X-Sessao": sessaoId } : {} });
+      if (!r.ok) throw new ErroApi(r.status, "Não foi possível abrir o arquivo da nota.");
+      return r.blob();
+    },
+    excluirNota: id => executar("DELETE", `/notas/${id}`),
   };
 })();
+
+/* ---------- Notas fiscais: nota de exemplo e conferência ----------
+   A conferência é a mesma regra do Services/ConferenciaNota.cs (C#), repetida aqui
+   para os avisos mudarem na hora em que o usuário edita um campo. Ao salvar,
+   a API confere de novo: o front ajuda, mas quem decide é o servidor. */
+const NOTA_EXEMPLO = {
+  arquivo: "nota-exemplo.jpg",
+  caminho: "exemplos/nota-exemplo.jpg",
+  dados: {
+    ehNotaFiscal: true, chaveAcesso: "35261011222333000181550010000048211735192649", numero: "000.004.821", serie: "1",
+    dataEmissao: "2026-10-03", emitenteCnpj: "11222333000181", emitenteNome: "EMBALAGENS MODELO LTDA",
+    destinatarioDocumento: "12345678000195", destinatarioNome: "DISTRIBUIDORA PIRACICABA LTDA", valorTotal: 1120.6,
+    itens: [
+      { descricao: "CAIXA DE PAPELÃO ONDULADO 60X40X40 CM", quantidade: 50, valorUnitario: 6.9, valorTotal: 345 },
+      { descricao: "FITA ADESIVA TRANSPARENTE 48 MM X 100 M", quantidade: 24, valorUnitario: 8.5, valorTotal: 204 },
+      { descricao: "PALLET PBR DE MADEIRA 1,00 X 1,20 M", quantidade: 4, valorUnitario: 79.9, valorTotal: 319.6 },
+      { descricao: "FILME STRETCH 500 MM X 25 MICRAS", quantidade: 6, valorUnitario: 42, valorTotal: 252 },
+    ],
+    camposIncertos: [],
+  },
+};
+
+const BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+const BRL_CURTO = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 1 });
+const soNumeros = t => String(t ?? "").replace(/\D/g, "");
+const normalizarDoc = t => String(t ?? "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+
+// CNPJ numérico ou alfanumérico: cada caractere vale (código ASCII − 48), pesos 2..9 da direita para a esquerda
+function cnpjValido(c) {
+  if (c.length !== 14 || !/^[0-9A-Z]{12}\d{2}$/.test(c) || new Set(c).size === 1) return false;
+  const dv = b => { let soma = 0, peso = 2; for (let i = b.length - 1; i >= 0; i--) { soma += (b.charCodeAt(i) - 48) * peso; peso = peso === 9 ? 2 : peso + 1; } const r = soma % 11; return r < 2 ? 0 : 11 - r; };
+  const d1 = dv(c.slice(0, 12)), d2 = dv(c.slice(0, 12) + d1);
+  return +c[12] === d1 && +c[13] === d2;
+}
+function cpfValido(c) {
+  if (!/^\d{11}$/.test(c) || new Set(c).size === 1) return false;
+  for (let t = 9; t < 11; t++) { let soma = 0; for (let i = 0; i < t; i++) soma += +c[i] * (t + 1 - i); if (+c[t] !== (soma * 10) % 11 % 10) return false; }
+  return true;
+}
+// Chave de acesso: módulo 11 com pesos 2..9 sobre os 43 primeiros dígitos
+function chaveValida(c) {
+  let soma = 0, peso = 2;
+  for (let i = 42; i >= 0; i--) { soma += +c[i] * peso; peso = peso === 9 ? 2 : peso + 1; }
+  const r = soma % 11; return +c[43] === (r < 2 ? 0 : 11 - r);
+}
+function conferirNota(n) {
+  const av = [], add = (campo, mensagem, bloqueia) => av.push({ campo, mensagem, bloqueia });
+  const cnpj = normalizarDoc(n.emitenteCnpj), dest = normalizarDoc(n.destinatarioDocumento), chave = soNumeros(n.chaveAcesso);
+  if (!cnpj) add("emitenteCnpj", "Informe o CNPJ do emitente.", true);
+  else if (!cnpjValido(cnpj)) add("emitenteCnpj", "CNPJ do emitente inválido (os dígitos verificadores não conferem).", true);
+  if (dest && !(dest.length === 11 ? cpfValido(dest) : cnpjValido(dest))) add("destinatarioDocumento", "CPF/CNPJ do destinatário inválido.", true);
+  if (chave) {
+    if (chave.length !== 44) add("chaveAcesso", `A chave de acesso tem 44 dígitos (foram lidos ${chave.length}).`, true);
+    else if (!chaveValida(chave)) add("chaveAcesso", "Chave de acesso inválida (o dígito verificador não confere).", true);
+    else {
+      if (cnpj.length === 14 && chave.slice(6, 20) !== cnpj) add("emitenteCnpj", "O CNPJ do emitente não bate com o que está na chave de acesso.", false);
+      if (/^\d+$/.test(String(n.serie ?? "").trim()) && +chave.slice(22, 25) !== +n.serie) add("serie", "A série não bate com a chave de acesso.", false);
+      if (soNumeros(n.numero) && +chave.slice(25, 34) !== +soNumeros(n.numero)) add("numero", "O número da nota não bate com a chave de acesso.", false);
+      if (n.dataEmissao && chave.slice(2, 6) !== n.dataEmissao.slice(2, 4) + n.dataEmissao.slice(5, 7)) add("dataEmissao", "O mês/ano de emissão não bate com a chave de acesso.", false);
+    }
+  }
+  if (n.dataEmissao && new Date(n.dataEmissao) > new Date(Date.now() + 864e5)) add("dataEmissao", "A data de emissão está no futuro.", false);
+  (n.itens || []).forEach((it, i) => {
+    if (it.quantidade != null && it.valorUnitario != null && it.valorTotal != null && Math.abs(it.quantidade * it.valorUnitario - it.valorTotal) > 0.05)
+      add("itens", `Item ${i + 1}: quantidade × valor unitário não dá o total do item.`, false);
+  });
+  const soma = (n.itens || []).reduce((s, it) => s + (Number(it.valorTotal) || 0), 0);
+  if ((n.itens || []).length && n.valorTotal != null && Math.abs(soma - n.valorTotal) > 0.05)
+    add("valorTotal", `A soma dos itens (${BRL.format(soma)}) é diferente do total da nota. Confira frete, descontos ou impostos.`, false);
+  return av;
+}
 
 /* ---------- datas: séries da semana e textos relativos ("há 2 h") ---------- */
 const mesmoDia = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -1371,6 +1662,11 @@ const P = {
   moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
   search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
   alert: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+  receipt: '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>',
+  sparkle: '<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>',
+  upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',
+  eye: '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>',
 };
 const ico = (k, cls = "") => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[k]}</svg>`;
 
@@ -1830,6 +2126,7 @@ function detalheEntrega(e) {
   if (!e) return `<section class="detail detail-empty" id="detail"><div>${ico("pkg")}<p style="margin-top:8px">Selecione uma entrega para ver os detalhes.</p></div></section>`;
   const ordem = ["Pendente", "EmTransito", "Entregue"], at = ordem.indexOf(e.status);
   const quando = { Pendente: e.criadaEm, EmTransito: e.despachadaEm, Entregue: e.entregueEm };
+  const notasEnt = DB.listarNotas().filter(n => n.entregaId === e.id);
   const steps = ordem.map((s, i) => `
     ${i ? `<div class="step-line ${i <= at ? "done" : ""}"></div>` : ""}
     <div class="step ${i < at || (i === at && s === "Entregue") ? "done" : i === at ? "now" : ""}">
@@ -1869,6 +2166,11 @@ function detalheEntrega(e) {
         <div class="d-tile"><small>Endereço</small><b>${esc(e.endereco)}</b></div>
       </div>
       <div class="steps" aria-label="Andamento da entrega">${steps}</div>
+      <div class="d-notas">
+        <span class="d-notas-t">${ico("receipt", "ic-sm")}Notas fiscais</span>
+        ${notasEnt.length ? notasEnt.map(n => `<button class="d-nota" data-ver-nota="${n.id}">NF ${esc(n.numero)} · ${BRL.format(n.valorTotal)}</button>`).join("") : '<span class="d-notas-v">Nenhuma nota vinculada</span>'}
+        <button class="btn btn-white btn-sm" data-anexar-nota="${e.id}">${ico("upload", "ic-sm")}Anexar nota</button>
+      </div>
       <div class="d-foot">
         ${acao}
         <button class="d-del" data-act="excluir" aria-label="Excluir entrega ${code(e.id)}">${ico("trash", "ic-sm")}</button>
@@ -1984,6 +2286,7 @@ const VIEWS = {
   entregas: { fn: viewEntregas, title: () => "Entregas", sub: () => "Acompanhe, despache e conclua as entregas" },
   clientes: { fn: viewClientes, title: () => "Clientes", sub: () => "Quem solicita as entregas" },
   motoristas: { fn: viewMotoristas, title: () => "Motoristas", sub: () => "Quem leva as entregas até o destino" },
+  notas: { fn: viewNotas, title: () => "Notas fiscais", sub: () => "Lidas por IA, conferidas por você" },
 };
 
 function render() {
@@ -2056,6 +2359,17 @@ document.addEventListener("click", async ev => {
     render();
   }); }
   if (t.id === "novaEntrega") return formEntrega();
+  // notas fiscais
+  if (d.novaNota) return abrirNovaNota({ exemplo: d.novaNota === "exemplo" });
+  if (d.anexarNota) return abrirNovaNota({ entregaId: Number(d.anexarNota) });
+  if (d.verNota) return verNota(Number(d.verNota));
+  if (d.goEnt) return irPara("entregas", { fEnt: "todas", sel: Number(d.goEnt) });
+  if (d.delNota) {
+    const n = DB.listarNotas().find(x => x.id === Number(d.delNota));
+    return confirmar(`Excluir a nota ${n.numero}?`, "A nota e o arquivo anexado serão removidos.", "Excluir nota", async () => {
+      const r = await DB.excluirNota(n.id); r.erro ? toast(r.erro, true) : toast(`Nota ${n.numero} excluída.`); render();
+    });
+  }
   if (t.id === "novoCliente") return formCliente();
   if (t.id === "novoMotorista") return formMotorista();
   if (d.editCli) return formCliente(Number(d.editCli));
@@ -2188,6 +2502,431 @@ $("#themeBtn").addEventListener("click", () => {
   document.documentElement.dataset.theme = novo; pref.set("theme", novo); pintarBotaoTema();
 });
 matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", pintarBotaoTema);
+
+/* =====================================================================
+   NOTAS FISCAIS — leitura por IA, revisão e cadastro
+   Fluxo: enviar arquivo → a IA lê → o usuário revisa (tudo editável) → confirma.
+   ===================================================================== */
+const fmtDoc = d => {
+  d = normalizarDoc(d);
+  if (d.length === 14) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
+  if (d.length === 11) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+  return d;
+};
+const dataBR = iso => iso ? iso.slice(0, 10).split("-").reverse().join("/") : "—";
+// número digitado no padrão brasileiro ("1.120,60") ou com ponto ("1120.6")
+const lerNum = t => { t = String(t ?? "").trim(); if (!t) return null; if (t.includes(",")) t = t.replace(/\./g, "").replace(",", "."); const n = Number(t); return Number.isFinite(n) ? n : null; };
+const fmtNum = (v, casas = 2) => v == null ? "" : Number(v).toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
+const fmtQtd = v => v == null ? "" : Number(v).toLocaleString("pt-BR", { maximumFractionDigits: 3 });
+
+/* ---------- tela: lista de notas ---------- */
+function viewNotas() {
+  const N = DB.listarNotas(), q = S.busca.toLowerCase();
+  const lista = N.filter(n => !q || [n.numero, n.emitenteNome, n.clienteNome, code(n.entregaId)].join(" ").toLowerCase().includes(q));
+  const total = N.reduce((s, n) => s + n.valorTotal, 0), porIa = N.filter(n => n.lidaPorIa).length;
+  const origem = n => n.lidaPorIa ? `<span class="chip ia">${ico("sparkle", "ic-xs")}IA</span>` : '<span class="chip off">Manual</span>';
+
+  const linhas = lista.map(n => `<tr>
+      <td><div class="who"><div class="nf-ico">${ico("receipt", "ic-sm")}</div><div><b>NF ${esc(n.numero)}${n.serie ? ` · série ${esc(n.serie)}` : ""}</b><span>Emissão ${dataBR(n.dataEmissao)}</span></div></div></td>
+      <td><b class="cel-b">${esc(n.emitenteNome)}</b><span class="cel-s num">${fmtDoc(n.emitenteCnpj)}</span></td>
+      <td><button class="link-ent" data-go-ent="${n.entregaId}">${codeHTML(n.entregaId)}</button><span class="cel-s">${esc(n.clienteNome || "—")}</span></td>
+      <td class="num" style="text-align:right"><b>${BRL.format(n.valorTotal)}</b></td>
+      <td>${origem(n)}</td>
+      <td><div class="row-acts">
+        <button class="icon-act" data-ver-nota="${n.id}" aria-label="Ver nota ${esc(n.numero)}">${ico("eye", "ic-sm")}</button>
+        <button class="icon-act del" data-del-nota="${n.id}" aria-label="Excluir nota ${esc(n.numero)}">${ico("trash", "ic-sm")}</button>
+      </div></td></tr>`).join("");
+
+  const cartoes = lista.map(n => `<div class="ccard">
+      <div class="nf-ico">${ico("receipt", "ic-sm")}</div>
+      <div class="t"><b>NF ${esc(n.numero)} · ${BRL.format(n.valorTotal)}</b>
+        <div class="meta">${origem(n)}<span>${esc(n.emitenteNome)} · ${code(n.entregaId)}</span></div></div>
+      <div class="acts">
+        <button class="icon-act" data-ver-nota="${n.id}" aria-label="Ver nota ${esc(n.numero)}">${ico("eye", "ic-sm")}</button>
+        <button class="icon-act del" data-del-nota="${n.id}" aria-label="Excluir nota ${esc(n.numero)}">${ico("trash", "ic-sm")}</button>
+      </div></div>`).join("");
+
+  const vazio = `
+    <div class="nf-vazio">
+      <div class="nf-vazio-ico">${ico("sparkle")}</div>
+      <h2>Cadastre notas fiscais sem digitar</h2>
+      <p>Envie a foto ou o PDF da nota: a IA preenche os campos, o sistema confere CNPJ, chave de acesso e totais, e você só revisa e confirma.</p>
+      <div class="nf-vazio-acts">
+        <button class="btn btn-primary" data-nova-nota="exemplo">${ico("sparkle", "ic-sm")}Testar com a nota de exemplo</button>
+        <button class="btn btn-soft" data-nova-nota="1">${ico("upload", "ic-sm")}Enviar uma nota</button>
+      </div>
+    </div>`;
+
+  return `
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="toolbar">
+        <div class="end"><button class="btn btn-soft" data-nova-nota="exemplo">${ico("sparkle", "ic-sm")}Nota de exemplo</button>
+          <button class="btn btn-primary" data-nova-nota="1">${ico("plus")}Nova nota</button></div>
+      </div>
+      <div class="mini-stats">
+        <div class="card mstat"><div class="kpi-ico">${ico("receipt")}</div><div><small>Notas</small><b class="num">${N.length}</b></div></div>
+        <div class="card mstat"><div class="kpi-ico">${ico("pkg")}</div><div><small>Valor total</small><b class="num"><span class="v-full">${BRL.format(total)}</span><span class="v-curto">${BRL_CURTO.format(total)}</span></b></div></div>
+        <div class="card mstat"><div class="kpi-ico">${ico("sparkle")}</div><div><small>Lidas por IA</small><b class="num">${porIa}<span>/${N.length}</span></b></div></div>
+      </div>
+      ${!N.length ? `<section class="card">${vazio}</section>` : `
+      <section class="card list-card">
+        <div class="ccards">${cartoes || `<div class="empty">${ico("search")}<div>Nenhuma nota encontrada.</div></div>`}</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">Nota</th><th scope="col">Emitente</th><th scope="col">Entrega</th><th scope="col" style="text-align:right">Valor</th><th scope="col">Origem</th><th scope="col"><span class="sr">Ações</span></th></tr></thead>
+            <tbody>${linhas || `<tr><td colspan="6"><div class="empty">${ico("search")}<div>Nenhuma nota encontrada.</div></div></td></tr>`}</tbody>
+          </table>
+        </div>
+      </section>`}
+    </div>`;
+}
+
+/* ---------- fluxo: nova nota (enviar → ler → revisar → salvar) ---------- */
+const NF = { etapa: "enviar", arquivo: null, url: null, entregaId: null, dados: null, ia: new Set(), incertos: new Set(), editados: new Set(), lidaPorIa: false, leitura: 0 };
+const CAMPOS_NF = ["chaveAcesso", "numero", "serie", "dataEmissao", "emitenteCnpj", "emitenteNome", "destinatarioDocumento", "destinatarioNome", "valorTotal", "itens"];
+
+function abrirNovaNota({ entregaId = null, exemplo = false } = {}) {
+  const E = DB.listarEntregas();
+  if (!E.length) return toast("Cadastre uma entrega antes de lançar notas fiscais.", true);
+  Object.assign(NF, { etapa: "enviar", arquivo: null, dados: null, ia: new Set(), incertos: new Set(), editados: new Set(), lidaPorIa: false, erro: null });
+  if (NF.url) URL.revokeObjectURL(NF.url);
+  NF.url = null;
+  NF.entregaId = entregaId || E[0].id;
+  abrirModal("Nova nota fiscal", `<div id="nfCorpo"></div>`, `<div class="nf-rodape" id="nfRodape"></div>`);
+  $(".modal").classList.add("wide");
+  desenharNF();
+  if (exemplo) usarNotaExemplo();
+}
+
+function desenharNF() {
+  const corpo = $("#nfCorpo"), rodape = $("#nfRodape");
+  if (!corpo) return;
+  if (NF.etapa === "enviar") {
+    const opcoes = DB.listarEntregas().map(e => `<option value="${e.id}" ${e.id === NF.entregaId ? "selected" : ""}>${code(e.id)} · ${esc(e.cliente?.nome || "sem cliente")} · ${ST[e.status].label}</option>`).join("");
+    corpo.innerHTML = `
+      <div class="field"><label for="nfEnt">Entrega desta nota</label><select id="nfEnt">${opcoes}</select>
+        <span class="hint">A nota fica vinculada a esta entrega.</span></div>
+      <label class="drop" id="nfDrop">
+        <input type="file" id="nfArq" accept="image/jpeg,image/png,image/webp,application/pdf" class="sr">
+        <span class="drop-ico">${ico("upload")}</span>
+        <b>Arraste a foto ou o PDF da nota aqui</b>
+        <span>ou clique para escolher · JPG, PNG, WEBP ou PDF, até 5 MB</span>
+        <span class="err" id="nfArqErr" role="alert"></span>
+      </label>
+      <div class="nf-ou"><span>ou</span></div>
+      <button type="button" class="btn btn-soft nf-exemplo" id="nfExemplo">${ico("sparkle", "ic-sm")}Testar com a nota de exemplo</button>
+      <p class="nf-priv">${ico("info", "ic-sm")}<span>Demonstração pública: use a nota de exemplo ou notas sem dados pessoais (CPF, endereço de pessoa física).</span></p>`;
+    rodape.innerHTML = `<button type="button" class="btn btn-ghost" id="nfCancelar">Cancelar</button><button type="button" class="btn btn-soft" id="nfManual">Preencher sem IA</button>`;
+    $("#nfEnt").addEventListener("change", e => { NF.entregaId = Number(e.target.value); });
+    const drop = $("#nfDrop"), inp = $("#nfArq");
+    inp.addEventListener("change", () => inp.files[0] && escolherArquivo(inp.files[0]));
+    ["dragenter", "dragover"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add("over"); }));
+    ["dragleave", "drop"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove("over"); }));
+    drop.addEventListener("drop", e => e.dataTransfer.files[0] && escolherArquivo(e.dataTransfer.files[0]));
+    $("#nfExemplo").addEventListener("click", usarNotaExemplo);
+    $("#nfManual").addEventListener("click", () => irParaRevisao(null));
+  }
+  if (NF.etapa === "lendo") {
+    corpo.innerHTML = `
+      <div class="nf">
+        ${previewNF()}
+        <div class="nf-lendo" aria-live="polite">
+          <div class="nf-pulse">${ico("sparkle")}</div>
+          <b>A IA está lendo a nota…</b>
+          <span>Costuma levar de 3 a 15 segundos.</span>
+          <ol class="nf-etapas">
+            <li class="ok">${ico("check", "ic-xs")}Arquivo enviado</li>
+            <li class="ativo"><i></i>Lendo os campos com o Gemini</li>
+            <li><i></i>Conferindo CNPJ, chave de acesso e totais</li>
+          </ol>
+          <div class="nf-skel"><i></i><i></i><i class="curto"></i><i></i><i class="curto"></i></div>
+        </div>
+      </div>`;
+    rodape.innerHTML = `<button type="button" class="btn btn-ghost" id="nfCancelar">Cancelar</button>`;
+  }
+  if (NF.etapa === "falhou") {
+    corpo.innerHTML = `
+      <div class="nf">
+        ${previewNF()}
+        <div class="nf-lendo">
+          <div class="nf-pulse erro">${ico("alert")}</div>
+          <b>Não deu para ler esta nota</b>
+          <span>${esc(NF.erro)}</span>
+          <div class="nf-vazio-acts">
+            ${NF.podeRepetir ? `<button type="button" class="btn btn-primary" id="nfRepetir">Tentar de novo</button>` : ""}
+            <button type="button" class="btn btn-soft" id="nfManual">Preencher manualmente</button>
+            <button type="button" class="btn btn-ghost" id="nfOutro">Escolher outro arquivo</button>
+          </div>
+        </div>
+      </div>`;
+    rodape.innerHTML = `<button type="button" class="btn btn-ghost" id="nfCancelar">Cancelar</button>`;
+    $("#nfRepetir")?.addEventListener("click", () => lerArquivoNF());
+    $("#nfManual").addEventListener("click", () => irParaRevisao(null));
+    $("#nfOutro").addEventListener("click", () => { NF.etapa = "enviar"; desenharNF(); });
+  }
+  if (NF.etapa === "revisar") desenharRevisao();
+  $("#nfCancelar")?.addEventListener("click", fecharNF);
+}
+
+function previewNF() {
+  if (!NF.arquivo) return `<div class="nf-prev vazio">${ico("file")}<span>Sem arquivo: preenchimento manual</span></div>`;
+  const pdf = NF.arquivo.type === "application/pdf";
+  return `
+    <details class="nf-prev-wrap" open>
+      <summary>Ver arquivo da nota</summary>
+      <div class="nf-prev">
+        ${NF.url ? (pdf ? `<object data="${NF.url}" type="application/pdf" aria-label="PDF da nota"><a href="${NF.url}" target="_blank" rel="noopener">Abrir o PDF</a></object>`
+                        : `<img src="${NF.url}" alt="Imagem da nota fiscal enviada">`) : `<div class="nf-prev vazio">${ico("file")}<span>${esc(NF.arquivo.name)}</span></div>`}
+      </div>
+      ${NF.url ? `<a class="nf-abrir" href="${NF.url}" target="_blank" rel="noopener">${ico("arrow", "ic-xs")}Abrir em tamanho real</a>` : ""}
+    </details>`;
+}
+
+function fecharNF() {
+  NF.leitura++;                                    // invalida uma leitura em andamento
+  if (NF.url) URL.revokeObjectURL(NF.url);
+  NF.url = null;
+  fecharModal();
+}
+
+async function usarNotaExemplo() {
+  let arquivo;
+  try {
+    const r = await fetch(NOTA_EXEMPLO.caminho);
+    if (!r.ok) throw new Error();
+    arquivo = new File([await r.blob()], NOTA_EXEMPLO.arquivo, { type: "image/jpeg" });
+  } catch {
+    arquivo = new File([new Uint8Array([0xFF, 0xD8, 0xFF])], NOTA_EXEMPLO.arquivo, { type: "image/jpeg" });
+  }
+  escolherArquivo(arquivo);
+}
+
+function escolherArquivo(arquivo) {
+  const tipos = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+  const err = $("#nfArqErr");
+  if (!tipos.includes(arquivo.type)) { if (err) err.textContent = "Formato não aceito. Envie JPG, PNG, WEBP ou PDF."; return; }
+  if (arquivo.size > 5 * 1024 * 1024) { if (err) err.textContent = "O arquivo passa de 5 MB. Tente uma foto menor."; return; }
+  NF.arquivo = arquivo;
+  if (NF.url) URL.revokeObjectURL(NF.url);
+  NF.url = arquivo.size > 3 ? URL.createObjectURL(arquivo) : null;
+  lerArquivoNF();
+}
+
+async function lerArquivoNF() {
+  NF.etapa = "lendo"; desenharNF();
+  const minha = ++NF.leitura;
+  const r = await DB.lerNota(NF.arquivo);
+  if (minha !== NF.leitura || !$("#nfCorpo")) return;       // o usuário cancelou ou fechou
+  if (r.ok) return irParaRevisao(r.dado);
+  NF.erro = r.erro;
+  NF.podeRepetir = r.status !== 400;                          // 400 = não é nota; repetir não adianta
+  NF.etapa = "falhou"; desenharNF();
+}
+
+// Monta os dados de revisão a partir da leitura da IA (ou vazios, no preenchimento manual)
+function irParaRevisao(leitura) {
+  const d = leitura?.dados || {};
+  NF.dados = {
+    chaveAcesso: d.chaveAcesso || "", numero: d.numero || "", serie: d.serie || "", dataEmissao: d.dataEmissao || "",
+    emitenteCnpj: d.emitenteCnpj || "", emitenteNome: d.emitenteNome || "",
+    destinatarioDocumento: d.destinatarioDocumento || "", destinatarioNome: d.destinatarioNome || "",
+    valorTotal: d.valorTotal ?? null,
+    itens: (d.itens || []).map(i => ({ descricao: i.descricao || "", quantidade: i.quantidade ?? null, valorUnitario: i.valorUnitario ?? null, valorTotal: i.valorTotal ?? null })),
+  };
+  if (!NF.dados.itens.length) NF.dados.itens.push({ descricao: "", quantidade: null, valorUnitario: null, valorTotal: null });
+  NF.lidaPorIa = !!leitura;
+  NF.ia = new Set(leitura ? CAMPOS_NF.filter(c => c === "itens" ? (d.itens || []).length : d[c] != null && d[c] !== "") : []);
+  NF.incertos = new Set(d.camposIncertos || []);
+  NF.editados = new Set();
+  NF.etapa = "revisar";
+  desenharNF();
+}
+
+function campoNF(campo, rotulo, attrs = "", larg = "") {
+  const v = NF.dados[campo];
+  const valor = campo === "valorTotal" ? fmtNum(v) : /Cnpj|Documento/.test(campo) ? fmtDoc(v) : (v ?? "");
+  const daIa = NF.ia.has(campo) && !NF.editados.has(campo), incerto = daIa && NF.incertos.has(campo);
+  return `
+    <div class="field ${incerto ? "incerto" : ""} ${larg}" data-campo="${campo}">
+      <label for="nf_${campo}">${rotulo}${daIa ? `<span class="ia-tag" title="Preenchido pela IA">${ico("sparkle", "ic-xs")}IA</span>` : NF.editados.has(campo) && NF.ia.has(campo) ? '<span class="ia-tag ed">editado</span>' : ""}</label>
+      <input id="nf_${campo}" name="${campo}" value="${esc(valor)}" autocomplete="off" spellcheck="false" ${attrs}>
+      ${incerto ? '<span class="hint warn">A IA leu este campo com dúvida. Confira na imagem.</span>' : ""}
+      <span class="err" role="alert"></span>
+    </div>`;
+}
+
+function itensNF() {
+  return NF.dados.itens.map((it, i) => `
+    <div class="nf-item" data-i="${i}">
+      <input aria-label="Descrição do item ${i + 1}" data-item="descricao" value="${esc(it.descricao)}" placeholder="Descrição do produto…" autocomplete="off">
+      <input aria-label="Quantidade do item ${i + 1}" data-item="quantidade" inputmode="decimal" value="${fmtQtd(it.quantidade)}" placeholder="Qtd" class="num">
+      <input aria-label="Valor unitário do item ${i + 1}" data-item="valorUnitario" inputmode="decimal" value="${fmtNum(it.valorUnitario)}" placeholder="Unit." class="num">
+      <input aria-label="Total do item ${i + 1}" data-item="valorTotal" inputmode="decimal" value="${fmtNum(it.valorTotal)}" placeholder="Total" class="num">
+      <button type="button" class="icon-act del" data-rem-item="${i}" aria-label="Remover item ${i + 1}">${ico("x", "ic-sm")}</button>
+    </div>`).join("");
+}
+
+function desenharRevisao() {
+  const corpo = $("#nfCorpo"), rodape = $("#nfRodape");
+  const opcoes = DB.listarEntregas().map(e => `<option value="${e.id}" ${e.id === NF.entregaId ? "selected" : ""}>${code(e.id)} · ${esc(e.cliente?.nome || "sem cliente")}</option>`).join("");
+  const itensIa = NF.ia.has("itens") && !NF.editados.has("itens");
+  corpo.innerHTML = `
+    <div class="nf">
+      ${previewNF()}
+      <div class="nf-form">
+        ${NF.lidaPorIa ? `<p class="nf-intro">${ico("sparkle", "ic-sm")}<span>Campos com <b>IA</b> foram preenchidos pela leitura. Confira com a imagem: tudo é editável.</span></p>` : ""}
+        <div id="nfConf"></div>
+        <fieldset class="nf-grupo"><legend>Identificação</legend>
+          ${campoNF("chaveAcesso", "Chave de acesso", 'inputmode="numeric" placeholder="44 dígitos…" class="num"', "full")}
+          <div class="g3">
+            ${campoNF("numero", "Número", 'placeholder="Ex.: 4821…"')}
+            ${campoNF("serie", "Série", 'placeholder="Ex.: 1…"')}
+            ${campoNF("dataEmissao", "Emissão", 'type="date"')}
+          </div>
+        </fieldset>
+        <fieldset class="nf-grupo"><legend>Emitente</legend>
+          <div class="g2">
+            ${campoNF("emitenteCnpj", "CNPJ", 'placeholder="00.000.000/0000-00…" class="num"')}
+            ${campoNF("emitenteNome", "Razão social", 'placeholder="Nome da empresa…"')}
+          </div>
+        </fieldset>
+        <fieldset class="nf-grupo"><legend>Destinatário</legend>
+          <div class="g2">
+            ${campoNF("destinatarioDocumento", "CNPJ ou CPF", 'placeholder="Documento…" class="num"')}
+            ${campoNF("destinatarioNome", "Nome", 'placeholder="Quem recebe…"')}
+          </div>
+        </fieldset>
+        <fieldset class="nf-grupo"><legend>Itens${itensIa ? `<span class="ia-tag">${ico("sparkle", "ic-xs")}IA</span>` : ""}</legend>
+          <div class="nf-item cab" aria-hidden="true"><span>Descrição</span><span>Qtd</span><span>Unit. (R$)</span><span>Total (R$)</span><span></span></div>
+          <div id="nfItens">${itensNF()}</div>
+          <button type="button" class="btn btn-ghost btn-sm" id="nfAddItem">${ico("plus", "ic-sm")}Adicionar item</button>
+          <span class="err" id="nfItensErr" role="alert"></span>
+        </fieldset>
+        <div class="g2 nf-total">
+          ${campoNF("valorTotal", "Valor total da nota (R$)", 'inputmode="decimal" placeholder="0,00" class="num"')}
+          <div class="field"><label for="nfEnt2">Entrega</label><select id="nfEnt2">${opcoes}</select><span class="err" role="alert"></span></div>
+        </div>
+        <p class="nf-soma" id="nfSoma"></p>
+      </div>
+    </div>`;
+  rodape.innerHTML = `<button type="button" class="btn btn-ghost" id="nfCancelar">Cancelar</button><button type="submit" class="btn btn-primary" id="nfSalvar">${ico("check", "ic-sm")}Confirmar e salvar</button>`;
+
+  // edição: qualquer mudança vira "editado", e a conferência roda de novo na hora
+  corpo.querySelectorAll(".nf-form [name]").forEach(inp => inp.addEventListener("input", () => {
+    NF.dados[inp.name] = inp.name === "valorTotal" ? lerNum(inp.value) : inp.value;
+    if (!NF.editados.has(inp.name)) {
+      NF.editados.add(inp.name);
+      const box = inp.closest(".field"); box.classList.remove("incerto"); box.querySelector(".hint.warn")?.remove();
+      const tag = box.querySelector(".ia-tag"); if (tag) { tag.className = "ia-tag ed"; tag.textContent = "editado"; }
+    }
+    atualizarConferencia();
+  }));
+  $("#nfEnt2").addEventListener("change", e => { NF.entregaId = Number(e.target.value); });
+  $("#nfItens").addEventListener("input", e => {
+    const inp = e.target.closest("[data-item]"); if (!inp) return;
+    const i = Number(inp.closest(".nf-item").dataset.i), k = inp.dataset.item;
+    NF.dados.itens[i][k] = k === "descricao" ? inp.value : lerNum(inp.value);
+    NF.editados.add("itens");
+    atualizarConferencia();
+  });
+  $("#nfItens").addEventListener("click", e => {
+    const b = e.target.closest("[data-rem-item]"); if (!b) return;
+    NF.dados.itens.splice(Number(b.dataset.remItem), 1); NF.editados.add("itens");
+    $("#nfItens").innerHTML = itensNF(); atualizarConferencia();
+  });
+  $("#nfAddItem").addEventListener("click", () => {
+    NF.dados.itens.push({ descricao: "", quantidade: null, valorUnitario: null, valorTotal: null });
+    $("#nfItens").innerHTML = itensNF(); $("#nfItens .nf-item:last-child input")?.focus();
+  });
+  $("#mForm").onsubmit = salvarNF;
+  atualizarConferencia();
+}
+
+// Roda a conferência e mostra o resultado: no quadro de avisos e no campo de cada aviso
+function atualizarConferencia() {
+  const itensValidos = NF.dados.itens.filter(i => i.descricao.trim() || i.valorTotal != null);
+  const avisos = conferirNota({ ...NF.dados, itens: itensValidos });
+  $$(".nf-form .field[data-campo]").forEach(b => { b.classList.remove("bad", "aviso"); const e = b.querySelector(".err"); if (e) e.textContent = ""; });
+  avisos.forEach(a => {
+    const box = $(`.nf-form .field[data-campo="${a.campo}"]`); if (!box) return;
+    box.classList.add(a.bloqueia ? "bad" : "aviso");
+    const e = box.querySelector(".err"); if (e && (a.bloqueia || !e.textContent)) e.textContent = a.mensagem;
+  });
+  $$(".nf-form .field.bad.aviso").forEach(b => b.classList.remove("aviso"));      // vermelho vence o amarelo
+  const soma = itensValidos.reduce((s, i) => s + (i.valorTotal || 0), 0);
+  $("#nfSoma").innerHTML = `Soma dos itens: <b>${BRL.format(soma)}</b>`;
+  const bloq = avisos.filter(a => a.bloqueia), alerta = avisos.filter(a => !a.bloqueia);
+  $("#nfConf").innerHTML = !avisos.length
+    ? `<div class="nf-conf ok">${ico("ccheck", "ic-sm")}<span><b>Conferência ok.</b> CNPJ, chave de acesso e totais conferem.</span></div>`
+    : `<div class="nf-conf ${bloq.length ? "bloq" : "alerta"}">${ico("alert", "ic-sm")}<div><b>${bloq.length ? `${plural(bloq.length, "ponto precisa", "pontos precisam")} de correção antes de salvar` : "Confira antes de salvar"}</b>
+        <ul>${[...bloq, ...alerta].map(a => `<li class="${a.bloqueia ? "b" : ""}">${esc(a.mensagem)}</li>`).join("")}</ul></div></div>`;
+  return avisos;
+}
+
+async function salvarNF(ev) {
+  ev.preventDefault();
+  const avisos = atualizarConferencia();
+  const itens = NF.dados.itens.filter(i => i.descricao.trim() || i.valorTotal != null);
+  const faltando = [];
+  if (!String(NF.dados.numero).trim()) faltando.push(["numero", "Informe o número da nota."]);
+  if (!String(NF.dados.emitenteNome).trim()) faltando.push(["emitenteNome", "Informe o nome do emitente."]);
+  if (!(NF.dados.valorTotal > 0)) faltando.push(["valorTotal", "Informe o valor total da nota."]);
+  faltando.forEach(([c, m]) => { const b = $(`.nf-form .field[data-campo="${c}"]`); b.classList.add("bad"); b.querySelector(".err").textContent = m; });
+  const itemRuim = itens.findIndex(i => !i.descricao.trim() || !(i.quantidade > 0));
+  $("#nfItensErr").textContent = itemRuim >= 0 ? `Confira o item ${itemRuim + 1}: descrição e quantidade são obrigatórias.` : "";
+  if (faltando.length || itemRuim >= 0 || avisos.some(a => a.bloqueia)) {
+    $(".nf-form .field.bad input")?.focus();
+    return toast("Corrija os campos destacados antes de salvar.", true);
+  }
+  const dados = {
+    ...NF.dados, entregaId: NF.entregaId, dataEmissao: NF.dados.dataEmissao || null,
+    itens: itens.map(i => ({ ...i, quantidade: i.quantidade || 0, valorUnitario: i.valorUnitario || 0, valorTotal: i.valorTotal || 0 })),
+    lidaPorIa: NF.lidaPorIa,
+  };
+  const r = await ocupado($("#nfSalvar"), () => DB.salvarNota(dados, NF.arquivo && NF.arquivo.size > 3 ? NF.arquivo : null));
+  if (r.erro) {
+    if (r.campos) for (const [c, m] of Object.entries(r.campos)) {
+      const b = $(`.nf-form .field[data-campo="${c}"]`); if (b) { b.classList.add("bad"); b.querySelector(".err").textContent = m; }
+    }
+    return toast(r.erro, true);
+  }
+  toast(`Nota ${r.dado.numero} salva e vinculada à ${code(dados.entregaId)}.`);
+  fecharNF();
+  irPara("notas");
+}
+
+/* ---------- ver uma nota salva ---------- */
+async function verNota(id) {
+  const r = await DB.buscarNota(id);
+  if (r.erro) return toast(r.erro, true);
+  const n = r.dado;
+  abrirModal(`Nota fiscal ${esc(n.numero)}`, `<div class="nf"><div class="nf-prev-wrap"><div class="nf-prev" id="nfVerPrev"><div class="nf-prev vazio">${ico("file")}<span>Carregando arquivo…</span></div></div></div>
+    <div class="nf-form">
+      <dl class="nf-dl">
+        <div><dt>Chave de acesso</dt><dd class="num">${esc(n.chaveAcesso || "—")}</dd></div>
+        <div><dt>Número / série</dt><dd>${esc(n.numero)}${n.serie ? " · " + esc(n.serie) : ""}</dd></div>
+        <div><dt>Emissão</dt><dd>${dataBR(n.dataEmissao)}</dd></div>
+        <div><dt>Emitente</dt><dd>${esc(n.emitenteNome)}<small class="num">${fmtDoc(n.emitenteCnpj)}</small></dd></div>
+        <div><dt>Destinatário</dt><dd>${esc(n.destinatarioNome || "—")}<small class="num">${fmtDoc(n.destinatarioDocumento)}</small></dd></div>
+        <div><dt>Entrega</dt><dd>${codeHTML(n.entregaId)}</dd></div>
+      </dl>
+      <table class="nf-tab"><thead><tr><th>Item</th><th class="n">Qtd</th><th class="n">Unit.</th><th class="n">Total</th></tr></thead>
+        <tbody>${n.itens.map(i => `<tr><td>${esc(i.descricao)}</td><td class="n num">${fmtQtd(i.quantidade)}</td><td class="n num">${fmtNum(i.valorUnitario)}</td><td class="n num">${fmtNum(i.valorTotal)}</td></tr>`).join("")}</tbody>
+        <tfoot><tr><td colspan="3">Valor total da nota</td><td class="n num"><b>${BRL.format(n.valorTotal)}</b></td></tr></tfoot></table>
+      <p class="nf-origem">${n.lidaPorIa ? `${ico("sparkle", "ic-xs")}Lida por IA e conferida pelo usuário` : "Digitada manualmente"} · cadastrada ${tempoRelativo(n.criadaEm)}</p>
+    </div></div>`,
+    `<button type="button" class="btn btn-ghost" id="mCancel">Fechar</button>`);
+  $(".modal").classList.add("wide");
+  $("#mCancel").addEventListener("click", fecharModal);
+  try {
+    const blob = await DB.arquivoNota(id);
+    const url = URL.createObjectURL(blob), alvo = $("#nfVerPrev");
+    if (!alvo) return URL.revokeObjectURL(url);
+    alvo.innerHTML = blob.type === "application/pdf" ? `<object data="${url}" type="application/pdf"><a href="${url}" target="_blank" rel="noopener">Abrir o PDF</a></object>` : `<img src="${url}" alt="Imagem da nota fiscal ${esc(n.numero)}">`;
+  } catch {
+    const alvo = $("#nfVerPrev"); if (alvo) alvo.innerHTML = `<div class="nf-prev vazio">${ico("file")}<span>Nota sem arquivo anexado</span></div>`;
+  }
+}
 
 /* =====================================================================
    MODAIS, FORMULÁRIOS E AVISOS

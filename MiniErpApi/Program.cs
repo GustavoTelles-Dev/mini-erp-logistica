@@ -24,6 +24,9 @@ builder.Services.AddScoped<SessaoAtual>();
 builder.Services.AddScoped<GerenciadorDeSessao>();
 builder.Services.AddHostedService<LimpezaDeSessoes>();
 
+// Leitura de notas fiscais com IA (Gemini). A chave vem de "Gemini:ChaveApi" (user-secrets / variavel de ambiente).
+builder.Services.AddSingleton<ILeitorDeNota, LeitorDeNotaGemini>();
+
 // ---------- JSON ----------
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -56,6 +59,20 @@ builder.Services.AddRateLimiter(options =>
     options.AddPolicy("sessao", contexto => RateLimitPartition.GetFixedWindowLimiter(
         contexto.Connection.RemoteIpAddress?.ToString() ?? "desconhecido",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(10) }));
+
+    // Leitura por IA custa cota do Gemini: no maximo 10 leituras por hora por IP.
+    options.AddPolicy("leitura-ia", contexto => RateLimitPartition.GetFixedWindowLimiter(
+        contexto.Connection.RemoteIpAddress?.ToString() ?? "desconhecido",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromHours(1) }));
+
+    // Mensagem amigavel quando o limite estoura (o front mostra o "detail")
+    options.OnRejected = async (contexto, cancelar) =>
+    {
+        await Results.Problem(
+            title: "Limite atingido",
+            detail: "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente de novo.",
+            statusCode: StatusCodes.Status429TooManyRequests).ExecuteAsync(contexto.HttpContext);
+    };
 });
 
 // No Railway a API fica atras de um proxy; isto faz o IP real do visitante chegar ate o limitador.
@@ -95,7 +112,8 @@ app.UseWhen(
     contexto => contexto.Request.Method != "OPTIONS" && (
         contexto.Request.Path.StartsWithSegments("/clientes") ||
         contexto.Request.Path.StartsWithSegments("/motoristas") ||
-        contexto.Request.Path.StartsWithSegments("/entregas")),
+        contexto.Request.Path.StartsWithSegments("/entregas") ||
+        contexto.Request.Path.StartsWithSegments("/notas")),
     ramo => ramo.UseMiddleware<SessaoMiddleware>());
 
 // Endpoints, cada grupo no seu arquivo dentro da pasta Endpoints
@@ -103,5 +121,6 @@ app.MapSessaoEndpoints();
 app.MapClienteEndpoints();
 app.MapMotoristaEndpoints();
 app.MapEntregaEndpoints();
+app.MapNotaEndpoints();
 
 app.Run();

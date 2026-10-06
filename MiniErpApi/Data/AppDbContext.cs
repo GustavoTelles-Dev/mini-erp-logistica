@@ -15,6 +15,8 @@ public class AppDbContext : DbContext
     public DbSet<Entrega> Entregas { get; set; }
     public DbSet<Motorista> Motoristas { get; set; }
     public DbSet<Sessao> Sessoes { get; set; }
+    public DbSet<NotaFiscal> NotasFiscais { get; set; }
+    public DbSet<ItemNota> ItensNota { get; set; }
 
     // Lido pelos filtros globais abaixo, a cada consulta.
     private Guid SessaoDaRequisicao => _sessaoAtual.Id;
@@ -26,6 +28,35 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Cliente>().HasQueryFilter(c => c.SessaoId == SessaoDaRequisicao);
         modelBuilder.Entity<Motorista>().HasQueryFilter(m => m.SessaoId == SessaoDaRequisicao);
         modelBuilder.Entity<Entrega>().HasQueryFilter(e => e.SessaoId == SessaoDaRequisicao);
+        modelBuilder.Entity<NotaFiscal>().HasQueryFilter(n => n.SessaoId == SessaoDaRequisicao);
+        modelBuilder.Entity<ItemNota>().HasQueryFilter(i => i.SessaoId == SessaoDaRequisicao);
+
+        // Notas fiscais: valores em dinheiro com 2 casas; quantidade com 3 (ex.: 1,250 kg)
+        modelBuilder.Entity<NotaFiscal>().HasIndex(n => n.SessaoId);
+        modelBuilder.Entity<NotaFiscal>().Property(n => n.ValorTotal).HasPrecision(14, 2);
+        modelBuilder.Entity<NotaFiscal>().Property(n => n.ChaveAcesso).HasMaxLength(44);
+        modelBuilder.Entity<NotaFiscal>().Property(n => n.Numero).HasMaxLength(20);
+        modelBuilder.Entity<NotaFiscal>().Property(n => n.Serie).HasMaxLength(5);
+        modelBuilder.Entity<NotaFiscal>().Property(n => n.EmitenteCnpj).HasMaxLength(14);
+        modelBuilder.Entity<NotaFiscal>().Property(n => n.EmitenteNome).HasMaxLength(150);
+        modelBuilder.Entity<NotaFiscal>().Property(n => n.DestinatarioDocumento).HasMaxLength(14);
+        modelBuilder.Entity<NotaFiscal>().Property(n => n.DestinatarioNome).HasMaxLength(150);
+        modelBuilder.Entity<NotaFiscal>().Property(n => n.ArquivoTipo).HasMaxLength(40);
+        modelBuilder.Entity<NotaFiscal>().Property(n => n.ArquivoNome).HasMaxLength(120);
+        modelBuilder.Entity<ItemNota>().Property(i => i.Descricao).HasMaxLength(200);
+        modelBuilder.Entity<ItemNota>().Property(i => i.Quantidade).HasPrecision(12, 3);
+        modelBuilder.Entity<ItemNota>().Property(i => i.ValorUnitario).HasPrecision(14, 2);
+        modelBuilder.Entity<ItemNota>().Property(i => i.ValorTotal).HasPrecision(14, 2);
+
+        // Nota -> Itens: excluir a nota leva os itens junto (cascata).
+        modelBuilder.Entity<NotaFiscal>()
+            .HasMany(n => n.Itens).WithOne()
+            .HasForeignKey(i => i.NotaFiscalId).OnDelete(DeleteBehavior.Cascade);
+
+        // Entrega -> Notas: Restrict (entrega com nota nao pode ser excluida sem antes tirar a nota).
+        modelBuilder.Entity<NotaFiscal>()
+            .HasOne(n => n.Entrega).WithMany()
+            .HasForeignKey(n => n.EntregaId).OnDelete(DeleteBehavior.Restrict);
 
         // Indices: as consultas sempre filtram por SessaoId; a limpeza filtra por UltimoAcesso.
         modelBuilder.Entity<Cliente>().HasIndex(c => c.SessaoId);

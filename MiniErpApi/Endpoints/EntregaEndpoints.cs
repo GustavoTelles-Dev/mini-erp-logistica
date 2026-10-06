@@ -117,13 +117,19 @@ public static class EntregaEndpoints
         return Results.Ok(entrega);
     }
 
-    // A entrega esta na ponta do relacionamento (nada depende dela), entao pode ser excluida direto.
+    // Entrega com nota fiscal vinculada nao pode sumir (a nota ficaria sem entrega).
     static async Task<IResult> Excluir(int id, AppDbContext db)
     {
         var entrega = await db.Entregas.FirstOrDefaultAsync(e => e.Id == id);
         if (entrega == null)
         {
             return Respostas.NaoEncontrado("Entrega não encontrada.");
+        }
+
+        bool temNotas = await db.NotasFiscais.AnyAsync(n => n.EntregaId == id);
+        if (temNotas)
+        {
+            return Respostas.Recusado("Esta entrega tem nota fiscal vinculada e não pode ser excluída. Exclua a nota primeiro.");
         }
 
         db.Entregas.Remove(entrega);
