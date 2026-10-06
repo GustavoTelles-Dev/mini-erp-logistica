@@ -1,0 +1,42 @@
+# Integracao continua: a cada push ou pull request na main, o GitHub
+# compila a API, roda os testes automatizados e confere se a imagem Docker monta.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    name: Compilar e testar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restaurar pacotes
+        run: dotnet restore MiniErpApi.Tests/MiniErpApi.Tests.csproj
+
+      - name: Compilar
+        run: dotnet build MiniErpApi.Tests/MiniErpApi.Tests.csproj --no-restore -c Release
+
+      - name: Rodar testes
+        run: dotnet test MiniErpApi.Tests/MiniErpApi.Tests.csproj --no-build -c Release --logger "console;verbosity=normal"
+
+  docker:
+    name: Montar imagem Docker
+    runs-on: ubuntu-latest
+    needs: testes
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build da imagem
+        run: docker build -t mini-erp-api .

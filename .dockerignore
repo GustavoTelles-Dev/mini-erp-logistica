@@ -1,0 +1,10 @@
+# Fica fora da imagem: builds locais, git, editor, versao console e testes
+**/bin/
+**/obj/
+.git/
+.github/
+.vscode/
+MiniErpLogistica/
+MiniErpApi.Tests/
+*.db
+*.md
