@@ -1,8 +1,10 @@
 # Mini ERP de Logística — Rota ERP
 
+[![CI](https://github.com/GustavoTelles-Dev/mini-erp-logistica/actions/workflows/ci.yml/badge.svg)](https://github.com/GustavoTelles-Dev/mini-erp-logistica/actions/workflows/ci.yml)
+
 Sistema de gestão logística (clientes, motoristas, entregas e notas fiscais) feito em **C# / .NET 8**, com banco **PostgreSQL (Supabase)**, **leitura de notas fiscais por IA (Google Gemini)** e uma interface web própria, o **Rota ERP**.
 
-> **Demonstração online:** _link disponível após o deploy no Railway_
+> **Demonstração online:** **[mini-erp-logistica-production.up.railway.app](https://mini-erp-logistica-production.up.railway.app/)** · API: [/swagger](https://mini-erp-logistica-production.up.railway.app/swagger)
 > Cada visitante ganha uma cópia própria dos dados: pode criar, editar e excluir à vontade, e nada afeta outra pessoa.
 
 <!-- GIF da demonstração: docs/demo.gif -->
@@ -88,6 +90,8 @@ Também: cabeçalhos HTTP de segurança (HSTS, `nosniff`, proteção contra *cli
 - **IA com saída estruturada + validação determinística**, atrás de uma interface (`ILeitorDeNota`) para trocar de provedor sem mexer no resto
 - Upload `multipart/form-data`, **concorrência otimista**, transações com trava de linha e *rate limiting*
 - Migrations aplicadas automaticamente ao iniciar
+- **Testes automatizados** (xUnit) das regras fiscais e das validações, rodando no **GitHub Actions** a cada push
+- **Docker** em duas etapas e deploy no **Railway**, com verificação de saúde (`/saude`) e segredos em variáveis de ambiente
 
 ## Como executar no seu computador
 
@@ -117,6 +121,16 @@ dotnet run
 - Swagger: `http://localhost:5185/swagger`
 - O arquivo `MiniErpApi/MiniErpApi.http` tem todas as chamadas prontas para testar no VS Code.
 
+Para rodar os testes automatizados (não precisam de banco nem de chave):
+
+```bash
+dotnet test MiniErpApi.Tests
+```
+
+### Publicação (Railway)
+
+O repositório já traz o `Dockerfile` e o `railway.json`. No Railway: *New Project → Deploy from GitHub repo*, cadastre as variáveis `ConnectionStrings__Supabase` e `Gemini__ChaveApi` (dois sublinhados no lugar dos dois-pontos) e gere o domínio em *Settings → Networking*.
+
 ## Endpoints da API
 
 Os endpoints de dados exigem a sessão (header `X-Sessao` ou cookie criado por `GET /sessao`).
@@ -144,6 +158,10 @@ Os endpoints de dados exigem a sessão (header `X-Sessao` ou cookie criado por `
 ```
 mini ERP logistico/
 ├── MiniErpLogistica/        # V1: versão console (SQLite), onde a lógica nasceu
+├── MiniErpApi.Tests/        # testes automatizados (xUnit)
+├── .github/workflows/       # CI: compila, testa e monta a imagem Docker
+├── Dockerfile               # imagem usada no Railway
+├── railway.json             # build, verificação de saúde e reinício automático
 └── MiniErpApi/              # versão atual
     ├── Program.cs           # configuração: banco, DI, limites, segurança, rotas
     ├── Models/              # entidades
@@ -159,7 +177,7 @@ mini ERP logistico/
 
 Comecei como uma aplicação de **console**, para firmar a lógica de negócio e a persistência. Depois evoluí para uma **API REST**, ganhei uma interface web, troquei o SQLite pelo PostgreSQL e adicionei a leitura de notas com IA. A ideia sempre foi construir uma base sólida e ir trocando as "portas de entrada" sem reescrever o núcleo.
 
-**Próximos passos:** testes automatizados e CI (GitHub Actions), cadastro de frota (veículo ligado a motorista e entrega) e histórico de status como eventos.
+**Próximos passos:** cadastro de frota (veículo ligado a motorista e entrega) e histórico de status como eventos.
 
 ## Autor
 
