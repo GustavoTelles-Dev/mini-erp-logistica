@@ -1,187 +1,166 @@
-# Mini ERP de Logística
+# Mini ERP de Logística — Rota ERP
 
-Sistema de gestão logística para controle de clientes, motoristas, entregas e notas fiscais, escrito em C# com .NET 8, com banco PostgreSQL no Supabase, leitura de notas fiscais por IA (Google Gemini) e uma interface web própria, o **Rota ERP**.
+Sistema de gestão logística (clientes, motoristas, entregas e notas fiscais) feito em **C# / .NET 8**, com banco **PostgreSQL (Supabase)**, **leitura de notas fiscais por IA (Google Gemini)** e uma interface web própria, o **Rota ERP**.
 
-Comecei este projeto como uma aplicação de console, para firmar a lógica de negócio e a persistência de dados, e depois o evoluí para uma **API REST**. A ideia sempre foi construir uma base sólida primeiro e ir trocando as "portas de entrada" (console, API, interface web) sem reescrever o núcleo.
+> **Demonstração online:** _link disponível após o deploy no Railway_
+> Cada visitante ganha uma cópia própria dos dados: pode criar, editar e excluir à vontade, e nada afeta outra pessoa.
+
+<!-- GIF da demonstração: docs/demo.gif -->
+
+---
+
+## Teste em 1 minuto
+
+1. **Abra a demonstração.** O painel já vem com uma semana de entregas de exemplo.
+2. **Despache uma entrega:** em *Entregas*, abra uma entrega **Pendente**, escolha o motorista e clique em *Despachar*. Depois clique em *Confirmar entrega* e veja a linha do tempo e o painel se atualizarem.
+3. **Cadastre uma nota fiscal com IA:** em *Notas fiscais*, clique em *Nova nota* e depois em **"Testar com a nota de exemplo"** (uma nota fictícia). A IA preenche os campos, o sistema confere CNPJ, chave de acesso e totais, e você revisa antes de salvar.
+4. **Teste as validações:** troque um dígito do CNPJ da nota ou tente salvar um cliente sem nome. As mensagens aparecem no campo certo.
+5. **Quer recomeçar?** O botão **Restaurar dados** volta tudo ao estado inicial.
+
+A API também pode ser explorada pelo **Swagger** (`/swagger`): chame `GET /sessao` primeiro e os outros endpoints passam a funcionar.
+
+---
 
 ## O que o sistema faz
 
-O domínio gira em torno de **entregas**. Cada entrega pertence a um cliente e, quando é despachada, passa a ter um motorista responsável. O status segue um ciclo de vida fixo, sem pular etapas:
+O domínio gira em torno de **entregas**. Cada entrega pertence a um cliente e, ao ser despachada, ganha um motorista. O status segue um ciclo fixo, sem pular etapas:
 
 ```
 Pendente  ──(despacho, exige motorista)──▶  Em trânsito  ──(confirmação)──▶  Entregue
 ```
 
-Cada etapa registra a data em que aconteceu. São essas datas que alimentam os gráficos da semana no painel e o histórico no detalhe de cada entrega.
+Cada etapa registra a data em que aconteceu; essas datas alimentam os gráficos do painel e o histórico de cada entrega.
 
-As entidades e como se relacionam:
+- **Cliente** — solicita entregas; cliente inativo não recebe entregas novas.
+- **Motorista** — leva as entregas.
+- **Entrega** — pertence a um cliente e recebe um motorista no despacho.
+- **Nota fiscal** — a nota da mercadoria que a entrega leva, com seus itens.
 
-- **Cliente** — quem solicita a entrega. Um cliente pode ter várias entregas; cliente inativo não recebe entregas novas.
-- **Motorista** — quem leva a entrega. Um motorista pode estar em várias entregas.
-- **Entrega** — pertence a um cliente (obrigatório) e a um motorista (opcional, definido no despacho).
-- **Nota fiscal** — a nota da mercadoria que a entrega leva, com seus itens. Uma entrega pode ter várias notas.
+Cliente ou motorista com entregas, e entrega com nota, não podem ser excluídos (a API avisa e o banco também impede).
 
-## Notas fiscais com IA
+## Notas fiscais com IA: a IA lê, o código confere
 
-A nota fiscal é cadastrada sem digitação, mas nunca sem conferência humana:
-
-1. O usuário envia a foto ou o PDF da nota (ou usa a **nota de exemplo fictícia** que vem no sistema).
-2. A API manda o arquivo para o **Gemini** com um formato de resposta fixo (*structured output*): chave de acesso, número, série, data, emitente, destinatário, valor total e itens. A IA também aponta os campos que leu com dúvida.
-3. **A IA lê; o código confere.** Antes de devolver, a API passa a leitura por regras fiscais escritas em C# (`ConferenciaNota`):
-   - dígitos verificadores do CNPJ (inclusive o CNPJ alfanumérico) e do CPF;
-   - chave de acesso com 44 dígitos e dígito verificador (módulo 11);
-   - cruzamento da chave com o CNPJ, a série, o número e o mês/ano de emissão;
+1. O usuário envia a foto ou o PDF da nota.
+2. A API manda o arquivo ao **Gemini** exigindo um formato de resposta fixo (*structured output*). A IA também aponta os campos que leu com dúvida.
+3. Antes de mostrar o resultado, a leitura passa por **regras fiscais escritas em C#** (`ConferenciaNota`):
+   - dígitos verificadores do **CNPJ** (inclusive o novo CNPJ alfanumérico) e do **CPF**;
+   - **chave de acesso** com 44 dígitos e dígito verificador (módulo 11);
+   - cruzamento da chave com CNPJ, série, número e mês/ano de emissão;
    - quantidade × valor unitário de cada item e soma dos itens × total da nota.
-4. A tela mostra os campos preenchidos (marcados com **IA**), destaca os incertos e lista os avisos da conferência. Tudo continua editável, e a conferência roda de novo a cada alteração.
-5. Só ao confirmar a nota é salva. A API valida tudo outra vez antes de gravar — o front ajuda, mas quem decide é o servidor.
+4. A tela mostra os campos preenchidos (marcados com **IA**), destaca os incertos e lista os avisos. Tudo continua editável.
+5. Só ao confirmar a nota é salva, e a API **valida tudo de novo** antes de gravar: o front ajuda, quem decide é o servidor.
 
-Detalhes de robustez: o arquivo é validado pela assinatura real dos bytes (não só pela extensão), a leitura tem limite de uso por IP e, se o modelo principal estiver sobrecarregado, a API tenta automaticamente um modelo reserva mais leve.
+## Segurança e robustez
 
-## Duas versões + interface web
+O sistema é público, então foi pensado para aguentar uso errado, abuso e falhas, sempre respondendo com uma mensagem clara (nunca uma tela quebrada):
 
-- **`MiniErpLogistica`** — versão console (SQLite), com menu interativo no terminal. Foi onde a lógica e as validações nasceram, e fica no repositório como registro desse começo.
-- **`MiniErpApi`** — a versão atual: API REST em ASP.NET Core Minimal API, banco PostgreSQL (Supabase) e a interface web **Rota ERP** servida pela própria API (`wwwroot/index.html`).
+| Situação | Como o sistema responde |
+|---|---|
+| Um visitante tentar ver dados de outro | Impossível: toda consulta é filtrada pela sessão do visitante (filtro global do EF Core) |
+| Chave do Gemini e senha do banco | Ficam só em *user-secrets* / variáveis de ambiente; nunca no código, no GitHub ou no navegador |
+| Script malicioso (XSS) | Todo dado é escapado na tela, e a **CSP** com hash só deixa rodar os scripts do próprio sistema |
+| Duas abas alterando a mesma entrega (*race condition*) | Concorrência otimista (`xmin` do Postgres): a segunda recebe "registro alterado em outra aba" |
+| Vários envios de nota ao mesmo tempo | A sessão é travada no banco (`SELECT … FOR UPDATE`): o limite de notas nunca é ultrapassado |
+| Arquivo grande demais ou falso | Limite de 5 MB e checagem da **assinatura real dos bytes** (um `.exe` renomeado para `.jpg` é recusado) |
+| Cota do Gemini esgotada ou IA lenta | Teto diário de leituras, fila de 3 leituras simultâneas, tempo limite de 40 s e **modelo reserva**; se nada der, o usuário é avisado e preenche à mão |
+| Excesso de requisições | *Rate limiting* por IP (geral, criação de sessão, leitura por IA e envio de notas) |
+| Banco cheio por abuso | Limites por sessão (cadastros, notas, espaço de arquivos) e sessões apagadas após 6 h sem uso |
+| Banco fora do ar | A API responde 503 com mensagem amigável e, ao iniciar, tenta conectar de novo antes de desistir |
+| Internet do usuário caiu | O front mostra um aviso de "sem conexão" e recarrega os dados quando ela volta |
+| Erro inesperado | Tratador central: o usuário vê uma mensagem simples, os detalhes ficam só no log do servidor |
 
-O Rota ERP é uma página única em HTML, CSS e JavaScript puro, sem framework:
-
-- Painel com indicadores, fluxo semanal (cadastradas × entregues), status das entregas e fila de despacho
-- Entregas em lista + detalhe, com despacho (escolha do motorista), confirmação e linha do tempo com datas
-- Cadastro, edição e exclusão de clientes e motoristas, com os erros de validação da API aparecendo no campo certo
-- Tema claro/escuro, layout responsivo (desktop, tablet e celular) e navegação por teclado nos gráficos
-
-## Demonstração isolada por visitante
-
-Como o projeto fica público para qualquer pessoa testar, cada visitante ganha uma **sessão própria (sandbox)**, já com dados de exemplo:
-
-- O front chama `GET /sessao`, guarda o Id na aba do navegador e envia o header `X-Sessao` em toda chamada.
-- Todas as tabelas têm uma coluna `SessaoId`, e o Entity Framework aplica um **filtro global** (`HasQueryFilter`) em toda consulta. Um visitante nunca enxerga nem altera os dados de outro — o mesmo princípio de isolamento (multi-tenant) usado por sistemas SaaS.
-- Ao salvar, o `AppDbContext` carimba o `SessaoId` sozinho em todo registro novo; nenhum endpoint precisa lembrar disso.
-- Um serviço em segundo plano (`LimpezaDeSessoes`) apaga as sessões paradas há mais de 6 horas. Fechou a aba, a próxima visita começa do zero.
-- A criação de sessões tem limite de requisições por IP.
+Também: cabeçalhos HTTP de segurança (HSTS, `nosniff`, proteção contra *clickjacking*), cookie `HttpOnly` + `SameSite=Strict`, CORS liberado só em desenvolvimento e validação de todos os dados de entrada no servidor.
 
 ## Tecnologias
 
-- **C# / .NET 8** (LTS)
-- **ASP.NET Core Minimal API** — camada HTTP, endpoints organizados por grupo
-- **Entity Framework Core 8** + **Npgsql** — ORM e provedor PostgreSQL
-- **PostgreSQL (Supabase)** — banco de dados
-- **Google Gemini** (SDK oficial `Google.GenAI`) — leitura das notas fiscais
-- **Swagger** — documentação e teste dos endpoints
-- **HTML, CSS e JavaScript** — interface web (Rota ERP)
+- **C# / .NET 8** (LTS) com **ASP.NET Core Minimal API**
+- **Entity Framework Core 8** + **Npgsql** (PostgreSQL no **Supabase**)
+- **Google Gemini** (SDK oficial `Google.GenAI`) com saída estruturada
+- **Swagger** para documentação e testes da API
+- **HTML, CSS e JavaScript puro** na interface (sem framework)
 
 ## Conceitos que o projeto exercita
 
-- CRUD completo com código **assíncrono** (`async`/`await`) de ponta a ponta
-- **Injeção de dependência** (o `AppDbContext` e os serviços chegam prontos em cada endpoint)
-- **DTOs de entrada** com validação, separando o que o cliente envia da entidade salva no banco
-- Respostas de erro padronizadas em **Problem Details** (RFC 9457): erros por campo (400) e regras de negócio
-- `enum` para o status e **regra de transição** do ciclo de vida da entrega
-- Relacionamentos um-para-muitos, chave estrangeira opcional e integridade referencial (API + banco)
-- **Multi-tenant** com filtros globais do EF Core, middleware e serviço em segundo plano (`BackgroundService`)
-- Limite de requisições (**rate limiting**) e configuração segura (connection string e chave da IA fora do código)
-- **IA com saída estruturada** + validação determinística, interface (`ILeitorDeNota`) para trocar de provedor sem mexer no resto e modelo reserva em caso de falha
-- Upload `multipart/form-data` com validação de tipo, tamanho e assinatura do arquivo
-- Migrations aplicadas automaticamente ao iniciar a aplicação
+- CRUD **assíncrono** de ponta a ponta, **injeção de dependência** e endpoints organizados por grupo
+- **DTOs com validação** e erros no padrão **Problem Details** (RFC 9457)
+- Regra de **transição de status** com `enum` e integridade referencial (API + banco)
+- **Multi-tenant** com filtros globais, *middleware* e serviço em segundo plano (`BackgroundService`)
+- **IA com saída estruturada + validação determinística**, atrás de uma interface (`ILeitorDeNota`) para trocar de provedor sem mexer no resto
+- Upload `multipart/form-data`, **concorrência otimista**, transações com trava de linha e *rate limiting*
+- Migrations aplicadas automaticamente ao iniciar
 
-## Como executar
+## Como executar no seu computador
 
 **Pré-requisitos:** [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) e um projeto no [Supabase](https://supabase.com) (o plano gratuito serve).
 
-1. No Supabase, abra **Connect**, escolha o tipo **.NET** e o método **Session pooler**, e copie a connection string (com a sua senha).
-2. Guarde a string nos *user-secrets* — ela fica fora da pasta do projeto e nunca vai para o Git:
+1. No Supabase, abra **Connect** → tipo **.NET** → método **Session pooler** e copie a connection string (com a sua senha).
+2. Guarde a string nos *user-secrets* (fica fora da pasta do projeto e nunca vai para o Git):
 
 ```bash
 cd MiniErpApi
 dotnet user-secrets set "ConnectionStrings:Supabase" "Host=...;Database=postgres;Username=...;Password=...;..."
 ```
 
-3. (Opcional) Para a leitura de notas por IA, gere uma chave no [Google AI Studio](https://aistudio.google.com/apikey) e guarde do mesmo jeito. Sem ela, o sistema funciona e as notas são preenchidas à mão:
+3. *(Opcional)* Para a leitura por IA, gere uma chave no [Google AI Studio](https://aistudio.google.com/apikey). Sem ela o sistema funciona e as notas são digitadas à mão:
 
 ```bash
 dotnet user-secrets set "Gemini:ChaveApi" "SUA_CHAVE"
 ```
 
-4. Rode a API. Na primeira execução as tabelas são criadas sozinhas (migrations automáticas):
+4. Rode. Na primeira execução as tabelas são criadas sozinhas:
 
 ```bash
 dotnet run
 ```
 
-Com a aplicação no ar:
-
-```
-http://localhost:5185           # interface web (Rota ERP)
-http://localhost:5185/swagger   # documentação interativa da API
-```
-
-> No Swagger, chame `GET /sessao` primeiro: ele cria a sua sessão e grava um cookie, e os outros endpoints passam a funcionar.
-> O arquivo `MiniErpApi/MiniErpApi.http` tem todas as chamadas prontas para testar pelo VS Code.
-
-### Console (V1)
-
-```bash
-cd MiniErpLogistica
-dotnet ef database update
-dotnet run
-```
+- Interface web: `http://localhost:5185`
+- Swagger: `http://localhost:5185/swagger`
+- O arquivo `MiniErpApi/MiniErpApi.http` tem todas as chamadas prontas para testar no VS Code.
 
 ## Endpoints da API
 
-Todos os endpoints de dados exigem a sessão (`X-Sessao` ou cookie).
+Os endpoints de dados exigem a sessão (header `X-Sessao` ou cookie criado por `GET /sessao`).
 
-| Método | Rota                  | Descrição                                                    |
-|--------|-----------------------|--------------------------------------------------------------|
-| GET    | `/sessao`             | Devolve a sessão do visitante (ou cria uma com dados de exemplo) |
-| POST   | `/sessao/reiniciar`   | Volta a sessão aos dados de exemplo                          |
-| GET    | `/clientes`           | Lista os clientes                                            |
-| POST   | `/clientes`           | Cadastra um cliente                                          |
-| PUT    | `/clientes/{id}`      | Atualiza um cliente                                          |
-| DELETE | `/clientes/{id}`      | Exclui um cliente (bloqueado se tiver entregas)              |
-| GET    | `/motoristas`         | Lista os motoristas                                          |
-| GET    | `/motoristas/{id}`    | Busca um motorista pelo id                                   |
-| POST   | `/motoristas`         | Cadastra um motorista                                        |
-| PUT    | `/motoristas/{id}`    | Atualiza um motorista                                        |
-| DELETE | `/motoristas/{id}`    | Exclui um motorista (bloqueado se tiver entregas)            |
-| GET    | `/entregas`           | Lista as entregas com cliente, motorista e datas             |
-| POST   | `/entregas`           | Cadastra uma entrega (nasce Pendente)                        |
-| PUT    | `/entregas/{id}`      | Despacha (`EmTransito` + motorista) ou conclui (`Entregue`)  |
-| DELETE | `/entregas/{id}`      | Exclui uma entrega (bloqueado se tiver nota fiscal)          |
-| GET    | `/notas`              | Lista as notas fiscais (com a entrega e o cliente)           |
-| GET    | `/notas/{id}`         | Detalhe da nota com os itens                                 |
-| GET    | `/notas/{id}/arquivo` | Arquivo original da nota (imagem ou PDF)                     |
-| POST   | `/notas/interpretar`  | Lê a nota com IA e confere (não salva)                       |
-| POST   | `/notas`              | Salva a nota conferida pelo usuário                          |
-| DELETE | `/notas/{id}`         | Exclui uma nota e seus itens                                 |
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/sessao` | Devolve a sessão do visitante (ou cria uma com dados de exemplo) |
+| POST | `/sessao/reiniciar` | Volta a sessão aos dados de exemplo |
+| GET · POST | `/clientes` | Lista / cadastra clientes |
+| PUT · DELETE | `/clientes/{id}` | Atualiza / exclui (bloqueado se tiver entregas) |
+| GET · POST | `/motoristas` | Lista / cadastra motoristas |
+| GET · PUT · DELETE | `/motoristas/{id}` | Busca / atualiza / exclui (bloqueado se tiver entregas) |
+| GET · POST | `/entregas` | Lista (com cliente, motorista e datas) / cadastra (nasce Pendente) |
+| PUT | `/entregas/{id}` | Despacha (`EmTransito` + motorista) ou conclui (`Entregue`) |
+| DELETE | `/entregas/{id}` | Exclui (bloqueado se tiver nota fiscal) |
+| GET | `/notas` | Lista as notas fiscais |
+| GET · DELETE | `/notas/{id}` | Detalhe com itens / exclui a nota e os itens |
+| GET | `/notas/{id}/arquivo` | Arquivo original (imagem ou PDF) |
+| POST | `/notas/interpretar` | Lê a nota com IA e confere (não salva) |
+| POST | `/notas` | Salva a nota conferida pelo usuário |
+| GET | `/saude` | Verificação de saúde (API + banco) |
 
 ## Estrutura do repositório
 
 ```
 mini ERP logistico/
-├── MiniErpLogistica/          # versão console (V1, SQLite)
-└── MiniErpApi/                # versão atual
-    ├── Program.cs             # configuração: banco, DI, JSON, CORS, rate limit, rotas
-    ├── Models/                # entidades: Cliente, Motorista, Entrega, NotaFiscal, ItemNota, Sessao
-    ├── Data/                  # AppDbContext (filtros por sessão), dados de exemplo, migrations
-    ├── Dtos/                  # dados de entrada + validação
-    ├── Endpoints/             # um arquivo por grupo de rotas
-    ├── Services/              # sessão do visitante, leitura com Gemini e conferência fiscal
+├── MiniErpLogistica/        # V1: versão console (SQLite), onde a lógica nasceu
+└── MiniErpApi/              # versão atual
+    ├── Program.cs           # configuração: banco, DI, limites, segurança, rotas
+    ├── Models/              # entidades
+    ├── Data/                # AppDbContext (filtros por sessão) e dados de exemplo
+    ├── Dtos/                # dados de entrada + validação
+    ├── Endpoints/           # um arquivo por grupo de rotas
+    ├── Services/            # sessão, IA, conferência fiscal, erros, segurança e limites
     ├── Migrations/
-    └── wwwroot/
-        ├── index.html         # interface web (Rota ERP)
-        └── exemplos/          # nota fiscal fictícia para testar a leitura por IA
+    └── wwwroot/             # interface web (Rota ERP) + nota fiscal fictícia de exemplo
 ```
 
-## Roadmap
+## A história do projeto
 
-- **Próximo — Publicação:** deploy no Railway, testes automatizados e CI com GitHub Actions.
-- **V2 — Veículo:** cadastro de frota, ligando motorista, veículo e entrega.
-- **V3 — Histórico de status:** registrar cada mudança de status como um evento próprio.
-- **Futuro:** autenticação de usuários e validação de entregas duplicadas.
+Comecei como uma aplicação de **console**, para firmar a lógica de negócio e a persistência. Depois evoluí para uma **API REST**, ganhei uma interface web, troquei o SQLite pelo PostgreSQL e adicionei a leitura de notas com IA. A ideia sempre foi construir uma base sólida e ir trocando as "portas de entrada" sem reescrever o núcleo.
+
+**Próximos passos:** testes automatizados e CI (GitHub Actions), cadastro de frota (veículo ligado a motorista e entrega) e histórico de status como eventos.
 
 ## Autor
 
-**Gustavo Delatore Telles**
-
----
-
-Projeto de estudo em C#, .NET e desenvolvimento de APIs REST.
+**Gustavo Delatore Telles** — projeto de estudo e portfólio em C#, .NET e APIs REST.

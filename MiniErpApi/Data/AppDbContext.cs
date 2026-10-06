@@ -64,6 +64,11 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Entrega>().HasIndex(e => e.SessaoId);
         modelBuilder.Entity<Sessao>().HasIndex(s => s.UltimoAcesso);
 
+        // Concorrencia otimista: o Postgres guarda a "versao" da linha (coluna de sistema xmin).
+        // Se duas abas despacharem a mesma entrega ao mesmo tempo, a segunda recebe erro de conflito
+        // (409) em vez de sobrescrever a primeira sem ninguem perceber.
+        modelBuilder.Entity<Entrega>().Property<uint>("Versao").IsRowVersion();
+
         // Status gravado como texto ("Pendente", "EmTransito"...) para ficar legivel no Supabase.
         modelBuilder.Entity<Entrega>().Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
 

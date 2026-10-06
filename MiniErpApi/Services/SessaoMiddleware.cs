@@ -1,4 +1,4 @@
-// Roda antes dos endpoints de dados (/clientes, /motoristas, /entregas).
+// Roda antes dos endpoints de dados (/clientes, /motoristas, /entregas, /notas).
 // Descobre de qual visitante e a requisicao; sem sessao valida, a requisicao para aqui.
 public class SessaoMiddleware
 {

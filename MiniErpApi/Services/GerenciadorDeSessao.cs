@@ -51,9 +51,15 @@ public class GerenciadorDeSessao
         return sessao;
     }
 
-    // Cria uma sessao nova ja com os dados de exemplo.
-    public async Task<Sessao> Criar()
+    // Cria uma sessao nova ja com os dados de exemplo. Devolve null se o teto de sessoes foi atingido.
+    public async Task<Sessao?> Criar()
     {
+        int ativas = await _db.Sessoes.CountAsync();
+        if (ativas >= LimitesDemo.MaximoSessoes)
+        {
+            return null;
+        }
+
         var sessao = new Sessao
         {
             Id = Guid.NewGuid(),
@@ -70,12 +76,26 @@ public class GerenciadorDeSessao
         return sessao;
     }
 
-    // Volta a sessao para o estado inicial (botao "Reiniciar demonstracao" do front).
+    // Volta a sessao para o estado inicial (botao "Restaurar dados" do front).
+    // Tudo numa transacao: ou apaga e recria tudo, ou nada muda (se o banco cair no meio, nao fica pela metade).
+    // A trava evita que dois cliques seguidos em "Restaurar" dupliquem os dados de exemplo.
     public async Task Reiniciar(Guid id)
     {
+        await using var transacao = await _db.Database.BeginTransactionAsync();
+        await Travar(_db, id);
+
         await ApagarDados(_db, id);
         _db.ChangeTracker.Clear();
         await DadosDemo.Popular(_db, id);
+
+        await transacao.CommitAsync();
+    }
+
+    // Trava a linha da sessao ate o fim da transacao atual (SELECT ... FOR UPDATE do Postgres).
+    // Operacoes da mesma sessao que usam a trava passam a acontecer uma de cada vez.
+    public static async Task Travar(AppDbContext db, Guid id, CancellationToken cancelar = default)
+    {
+        await db.Database.ExecuteSqlAsync($"SELECT 1 FROM \"Sessoes\" WHERE \"Id\" = {id} FOR UPDATE", cancelar);
     }
 
     // Apaga os dados de uma sessao, de quem depende para quem e dependido:

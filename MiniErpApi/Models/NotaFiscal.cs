@@ -33,6 +33,10 @@ public class NotaFiscal : IDaSessao
     public string? ArquivoTipo { get; set; }
     public string? ArquivoNome { get; set; }
 
+    // Tamanho do arquivo em bytes: usado para controlar o espaco total ocupado no banco
+    [JsonIgnore]
+    public int ArquivoTamanho { get; set; }
+
     [JsonIgnore]
     public Guid SessaoId { get; set; }
 }

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
+// Endpoints de entregas: listar, cadastrar, mudar o status (despacho / entregue) e excluir.
 public static class EntregaEndpoints
 {
     public static void MapEntregaEndpoints(this WebApplication app)
@@ -41,6 +42,12 @@ public static class EntregaEndpoints
         if (!cliente.Ativo)
         {
             return Respostas.Recusado("Cliente inativo não pode receber entregas. Ative o cliente primeiro.");
+        }
+
+        int cadastradas = await db.Entregas.CountAsync();
+        if (cadastradas >= LimitesDemo.CadastrosPorTabela)
+        {
+            return Respostas.Recusado(LimitesDemo.MensagemCadastroCheio("entregas"));
         }
 
         // Toda entrega nasce Pendente, sem motorista, com a data de agora.

@@ -46,6 +46,49 @@ public class LeitorDeNotaGemini : ILeitorDeNota
         - Se o documento não for uma nota fiscal, devolva ehNotaFiscal = false e o resto nulo.
         """;
 
+    // ---------- protecoes de uso da IA (valem para todos os visitantes juntos) ----------
+    // No maximo 3 leituras ao mesmo tempo: segura picos sem estourar memoria nem a cota do Gemini.
+    private static readonly SemaphoreSlim Fila = new(3, 3);
+    // Teto diario de leituras (Gemini:LimiteDiario, padrao 300): a cota gratuita do Google nao acaba de surpresa.
+    private static readonly object TravaDoDia = new();
+    private static DateOnly _dia = DateOnly.FromDateTime(DateTime.UtcNow);
+    private static int _leiturasHoje;
+    // Tempo maximo de espera por modelo: se o Google travar, a leitura nao fica pendurada.
+    private static readonly TimeSpan TempoMaximo = TimeSpan.FromSeconds(40);
+
+    private static bool ReservarLeituraDoDia(int limite)
+    {
+        lock (TravaDoDia)
+        {
+            var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (hoje != _dia)
+            {
+                _dia = hoje;
+                _leiturasHoje = 0;
+            }
+
+            if (_leiturasHoje >= limite)
+            {
+                return false;
+            }
+
+            _leiturasHoje++;
+            return true;
+        }
+    }
+
+    // Devolve a leitura reservada quando ela nem chegou a ser feita (ex.: fila cheia)
+    private static void DevolverLeituraDoDia()
+    {
+        lock (TravaDoDia)
+        {
+            if (_leiturasHoje > 0)
+            {
+                _leiturasHoje--;
+            }
+        }
+    }
+
     public async Task<NotaLida> Ler(byte[] arquivo, string tipo, CancellationToken cancelar)
     {
         string? chave = _config["Gemini:ChaveApi"];
@@ -54,6 +97,30 @@ public class LeitorDeNotaGemini : ILeitorDeNota
             throw new LeituraIndisponivelException("A leitura por IA não está configurada neste servidor. Preencha os campos manualmente.");
         }
 
+        int limiteDiario = int.TryParse(_config["Gemini:LimiteDiario"], out int limite) ? limite : 300;
+        if (!ReservarLeituraDoDia(limiteDiario))
+        {
+            throw new LeituraIndisponivelException("A demonstração atingiu o limite diário de leituras por IA. Preencha os campos manualmente ou tente amanhã.");
+        }
+
+        if (!await Fila.WaitAsync(TimeSpan.FromSeconds(20), cancelar))
+        {
+            DevolverLeituraDoDia();
+            throw new LeituraFalhouException("Muitas leituras acontecendo ao mesmo tempo agora. Tente de novo em instantes ou preencha manualmente.");
+        }
+
+        try
+        {
+            return await LerComGemini(chave, arquivo, tipo, cancelar);
+        }
+        finally
+        {
+            Fila.Release();
+        }
+    }
+
+    private async Task<NotaLida> LerComGemini(string chave, byte[] arquivo, string tipo, CancellationToken cancelar)
+    {
         // Modelo principal e reserva: se o principal estiver sobrecarregado (acontece em horario de pico),
         // a leitura tenta de novo no modelo mais leve antes de desistir.
         string[] modelos =
@@ -87,25 +154,39 @@ public class LeitorDeNotaGemini : ILeitorDeNota
 
         string? texto = null;
         Exception? ultimoErro = null;
+        bool cotaEsgotada = false;
 
         foreach (string modelo in modelos)
         {
             try
             {
-                var resposta = await cliente.Models.GenerateContentAsync(model: modelo, contents: conteudo, config: configuracao);
+                var resposta = await cliente.Models
+                    .GenerateContentAsync(model: modelo, contents: conteudo, config: configuracao)
+                    .WaitAsync(TempoMaximo, cancelar);
                 texto = resposta.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
                 break;
             }
             catch (Exception erro) when (!cancelar.IsCancellationRequested)
             {
                 ultimoErro = erro;
-                _log.LogWarning(erro, "Falha ao ler a nota com o modelo {Modelo}. Tentando o proximo.", modelo);
+                // 429 / RESOURCE_EXHAUSTED = a cota do Google (por minuto ou por dia) acabou
+                string detalhe = erro.ToString();
+                if (detalhe.Contains("429") || detalhe.Contains("RESOURCE_EXHAUSTED", StringComparison.OrdinalIgnoreCase))
+                {
+                    cotaEsgotada = true;
+                }
+                _log.LogWarning("Falha ao ler a nota com o modelo {Modelo}: {Tipo} {Mensagem}. Tentando o proximo.", modelo, erro.GetType().Name, erro.Message);
             }
+        }
+
+        if (texto == null && cotaEsgotada)
+        {
+            throw new LeituraIndisponivelException("A cota de leituras por IA da demonstração acabou por enquanto. Preencha os campos manualmente ou tente mais tarde.");
         }
 
         if (texto == null && ultimoErro != null)
         {
-            throw new LeituraFalhouException("O serviço de IA está sobrecarregado agora. Tente de novo em instantes ou preencha manualmente.", ultimoErro);
+            throw new LeituraFalhouException("O serviço de IA está sobrecarregado ou demorou demais agora. Tente de novo em instantes ou preencha manualmente.", ultimoErro);
         }
 
         if (string.IsNullOrWhiteSpace(texto))

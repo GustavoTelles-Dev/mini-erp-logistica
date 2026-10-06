@@ -19,7 +19,7 @@ public static class ConferenciaNota
 
     public static Dados De(NotaEntrada nota)
     {
-        var itens = nota.Itens.Select(i => ((decimal?)i.Quantidade, (decimal?)i.ValorUnitario, (decimal?)i.ValorTotal)).ToList();
+        var itens = (nota.Itens ?? new List<ItemEntrada>()).Select(i => ((decimal?)i.Quantidade, (decimal?)i.ValorUnitario, (decimal?)i.ValorTotal)).ToList();
         return new Dados(nota.ChaveAcesso, nota.Numero, nota.Serie, nota.DataEmissao, nota.EmitenteCnpj, nota.DestinatarioDocumento, nota.ValorTotal, itens);
     }
 

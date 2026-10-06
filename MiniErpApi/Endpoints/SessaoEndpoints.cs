@@ -27,11 +27,18 @@ public static class SessaoEndpoints
             sessao = await gerenciador.Criar();
         }
 
+        if (sessao == null)
+        {
+            return Results.Problem(title: "Demonstração lotada",
+                detail: "Muitas pessoas estão usando a demonstração agora. Tente de novo em alguns minutos.",
+                statusCode: StatusCodes.Status503ServiceUnavailable);
+        }
+
         // O front usa o header X-Sessao; o cookie e para o Swagger funcionar sozinho.
         contexto.Response.Cookies.Append("rota_sessao", sessao.Id.ToString(), new CookieOptions
         {
             HttpOnly = true,
-            SameSite = SameSiteMode.Lax,
+            SameSite = SameSiteMode.Strict,   // outro site nunca consegue usar este cookie (protecao contra CSRF)
             Secure = contexto.Request.IsHttps,
             MaxAge = TimeSpan.FromHours(LimpezaDeSessoes.HorasSemUso),
         });

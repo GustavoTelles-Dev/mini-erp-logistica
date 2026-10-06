@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
+// Endpoints de motoristas: listar, buscar, cadastrar, editar e excluir.
 public static class MotoristaEndpoints
 {
     public static void MapMotoristaEndpoints(this WebApplication app)
@@ -36,6 +37,12 @@ public static class MotoristaEndpoints
         if (erros.Count > 0)
         {
             return Results.ValidationProblem(erros);
+        }
+
+        int cadastrados = await db.Motoristas.CountAsync();
+        if (cadastrados >= LimitesDemo.CadastrosPorTabela)
+        {
+            return Respostas.Recusado(LimitesDemo.MensagemCadastroCheio("motoristas"));
         }
 
         var motorista = new Motorista

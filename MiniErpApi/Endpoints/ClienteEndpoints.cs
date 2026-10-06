@@ -28,6 +28,12 @@ public static class ClienteEndpoints
             return Results.ValidationProblem(erros);
         }
 
+        int cadastrados = await db.Clientes.CountAsync();
+        if (cadastrados >= LimitesDemo.CadastrosPorTabela)
+        {
+            return Respostas.Recusado(LimitesDemo.MensagemCadastroCheio("clientes"));
+        }
+
         var cliente = new Cliente
         {
             Nome = dados.Nome!.Trim(),
