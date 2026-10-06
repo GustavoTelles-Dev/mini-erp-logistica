@@ -22,6 +22,7 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(conexao
 
 // Sandbox de demonstracao (uma sessao isolada por visitante)
 builder.Services.AddScoped<SessaoAtual>();
+builder.Services.AddMemoryCache();   // guarda por alguns minutos as sessoes ja conferidas (menos idas ao banco)
 builder.Services.AddScoped<GerenciadorDeSessao>();
 builder.Services.AddHostedService<LimpezaDeSessoes>();
 

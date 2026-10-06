@@ -1,15 +1,27 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 // Regras da sandbox: ler, ativar, criar, reiniciar e apagar a sessao de um visitante.
 public class GerenciadorDeSessao
 {
     private readonly AppDbContext _db;
     private readonly SessaoAtual _sessaoAtual;
+    private readonly IMemoryCache _memoria;
 
-    public GerenciadorDeSessao(AppDbContext db, SessaoAtual sessaoAtual)
+    // Por quanto tempo uma sessao ja conferida no banco fica guardada na memoria da API.
+    // Toda requisicao precisa validar a sessao; com a memoria, so uma a cada 2 minutos vai ao banco.
+    private static readonly TimeSpan TempoNaMemoria = TimeSpan.FromMinutes(2);
+
+    public GerenciadorDeSessao(AppDbContext db, SessaoAtual sessaoAtual, IMemoryCache memoria)
     {
         _db = db;
         _sessaoAtual = sessaoAtual;
+        _memoria = memoria;
+    }
+
+    private static string Chave(Guid id)
+    {
+        return "sessao:" + id;
     }
 
     // Le o Id enviado pelo front (header X-Sessao) ou, na falta dele, pelo cookie (usado no Swagger).
@@ -33,6 +45,14 @@ public class GerenciadorDeSessao
     // Procura a sessao; se existir, registra o acesso e a torna a sessao desta requisicao.
     public async Task<Sessao?> Ativar(Guid id)
     {
+        // Sessao conferida ha pouco: usa a da memoria e economiza uma ida ao banco.
+        // So sessoes que existem entram na memoria, entao um Id inventado sempre e checado no banco (e recusado).
+        if (_memoria.TryGetValue(Chave(id), out Sessao? guardada) && guardada != null)
+        {
+            _sessaoAtual.Id = guardada.Id;
+            return guardada;
+        }
+
         var sessao = await _db.Sessoes.FindAsync(id);
 
         if (sessao == null)
@@ -47,6 +67,7 @@ public class GerenciadorDeSessao
             await _db.SaveChangesAsync();
         }
 
+        _memoria.Set(Chave(sessao.Id), sessao, TempoNaMemoria);
         _sessaoAtual.Id = sessao.Id;
         return sessao;
     }
@@ -73,6 +94,7 @@ public class GerenciadorDeSessao
         _sessaoAtual.Id = sessao.Id;
         await DadosDemo.Popular(_db, sessao.Id);
 
+        _memoria.Set(Chave(sessao.Id), sessao, TempoNaMemoria);
         return sessao;
     }
 
