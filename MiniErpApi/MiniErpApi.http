@@ -1,12 +1,22 @@
 @MiniErpApi_HostAddress = http://localhost:5185
 
+### 1) Sessao de demonstracao — chame primeiro e copie o "id" para a variavel abaixo
+GET {{MiniErpApi_HostAddress}}/sessao
+
+@sessao = COLE_O_ID_AQUI
+
+### Reiniciar a sessao (volta aos dados de exemplo)
+POST {{MiniErpApi_HostAddress}}/sessao/reiniciar
+X-Sessao: {{sessao}}
+
 ### Clientes
 
 GET {{MiniErpApi_HostAddress}}/clientes
-Accept: application/json
+X-Sessao: {{sessao}}
 
 ###
 POST {{MiniErpApi_HostAddress}}/clientes
+X-Sessao: {{sessao}}
 Content-Type: application/json
 
 {
@@ -15,8 +25,19 @@ Content-Type: application/json
   "ativo": true
 }
 
+### Validacao: devolve 400 com os erros por campo
+POST {{MiniErpApi_HostAddress}}/clientes
+X-Sessao: {{sessao}}
+Content-Type: application/json
+
+{
+  "nome": "",
+  "idade": 0
+}'
+
 ###
 PUT {{MiniErpApi_HostAddress}}/clientes/1
+X-Sessao: {{sessao}}
 Content-Type: application/json
 
 {
@@ -27,57 +48,62 @@ Content-Type: application/json
 
 ###
 DELETE {{MiniErpApi_HostAddress}}/clientes/1
+X-Sessao: {{sessao}}
 
 ### Motoristas
 
 GET {{MiniErpApi_HostAddress}}/motoristas
-Accept: application/json
+X-Sessao: {{sessao}}
 
 ###
 POST {{MiniErpApi_HostAddress}}/motoristas
+X-Sessao: {{sessao}}
 Content-Type: application/json
 
 {
   "nome": "Joao Souza",
-  "cnh": "12345678900",
-  "telefone": "19999999999"
-}
-
-###
-PUT {{MiniErpApi_HostAddress}}/motoristas/1
-Content-Type: application/json
-
-{
-  "nome": "Joao Souza",
-  "cnh": "12345678900",
-  "telefone": "19988887777"
+  "cnh": "123.456.789-00",
+  "telefone": "(19) 99999-9999"
 }
 
 ###
 DELETE {{MiniErpApi_HostAddress}}/motoristas/1
+X-Sessao: {{sessao}}
 
 ### Entregas
 
 GET {{MiniErpApi_HostAddress}}/entregas
-Accept: application/json
+X-Sessao: {{sessao}}
 
 ###
 POST {{MiniErpApi_HostAddress}}/entregas
+X-Sessao: {{sessao}}
 Content-Type: application/json
 
 {
-  "endereco": "Rua das Flores, 123",
+  "endereco": "Rua das Flores, 123 - Centro, Limeira",
   "clienteId": 1
 }
 
-### Despachar entrega (muda status para "Em transito" e vincula motorista)
+### Despachar (Pendente -> EmTransito, exige motorista)
 PUT {{MiniErpApi_HostAddress}}/entregas/1
+X-Sessao: {{sessao}}
 Content-Type: application/json
 
 {
-  "status": "Em transito",
+  "status": "EmTransito",
   "motoristaId": 1
+}
+
+### Concluir (EmTransito -> Entregue)
+PUT {{MiniErpApi_HostAddress}}/entregas/1
+X-Sessao: {{sessao}}
+Content-Type: application/json
+
+{
+  "status": "Entregue"
 }
 
 ###
 DELETE {{MiniErpApi_HostAddress}}/entregas/1
+X-Sessao: {{sessao}}
